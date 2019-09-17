@@ -8,7 +8,13 @@ playersHand = 0
 
 # create a new deck of cards
 deck = []
-
+colors = ['hearts', 'diamonds', 'spades', 'clubs']
+cards = [2, 3, 4, 5, 6, 7, 8, 9, 10, 'Jack', 'Queen', 'King', 'Ace']
+for color in colors:
+	for card in cards:
+		newCard = str(card) + ' of ' + color
+		deck.append(newCard)
+print(deck)
 
 # deal two cards to the player
 for i in range(2):
