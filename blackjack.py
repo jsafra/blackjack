@@ -4,42 +4,79 @@
 import random, logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 playersHand = 0
-#logging.disable(level=logging.CRITICAL)
+logging.disable(level=logging.CRITICAL)
 
-# create a new deck of cards
-deck = []
-colors = ['hearts', 'diamonds', 'spades', 'clubs']
-cards = [2, 3, 4, 5, 6, 7, 8, 9, 10, 'Jack', 'Queen', 'King', 'Ace']
-for color in colors:
-	for card in cards:
-		newCard = str(card) + ' of ' + color
-		deck.append(newCard)
-print(deck)
+def createDeck(): # create a new deck of cards
+	deck = []
+	colors = ['hearts', 'diamonds', 'spades', 'clubs']
+	cards = [2, 3, 4, 5, 6, 7, 8, 9, 10, 'Jack', 'Queen', 'King', 'Ace']
+	for color in colors:
+		for card in cards:
+			newCard = str(card) + ' of ' + color
+			deck.append(newCard)
+	return deck
 
-# deal two cards to the player
-for i in range(2):
-    playersHand = playersHand + random.randint(2, 10)
-    logging.debug('Player has ' + str(playersHand) + ' points')
-print('You were dealt cards with total value of ' + str(playersHand))
+def cardValue(card): # find a value of a card
+	if card[:2].strip().isnumeric() == True:
+		value = int(card[:2])
+		return value
+	if card[:4] in ['Jack', 'King'] or card[:5] in ['Queen']:
+		value = 10
+		return value
+	if card[:3] == 'Ace':
+		value = 11
+		return value
 
-# ask player to draw as long as he wants or until he gets busted
-while playersHand < 22:
-    if playersHand == 21:
-        print('Congratulations, you won!')
-        break
-    print('Would you like to draw one more card? If so type in \'yes\'' )
-    playersAnswer = input()
-    logging.debug('Player answered ' + playersAnswer)     
-    if playersAnswer.lower() == 'yes':
-        newCard = random.randint(2,10)
-        print('You have drawn ' + str(newCard))
-        playersHand = playersHand + newCard
-        print('You now have cards with total value of ' + str(playersHand))
-    if playersAnswer.lower() == 'no':
-        print('Okay, your final hand is ' + str(playersHand))
-        break
-    logging.debug('PlayersAnswer is ' + playersAnswer)
-    if playersAnswer.lower() != 'yes' and playersAnswer.lower() !='no':
-        print('I\'m sorry, I don\'t understand. Please answer \'yes\' or \'no\'')
 
-print('Thank you for playing')
+def drawCard(deck): #deals a card
+	drawnCard = random.choice(deck)
+	deck.remove(drawnCard)
+	print('You have been dealt \'{}\''.format(drawnCard))
+	logging.debug('\'{}\' have been drawn and scratched from the deck'.format(drawnCard))
+	return drawnCard
+
+def handValue(hand): #counts value of cards in hand
+	sum = 0
+	for card in hand:
+		sum += cardValue(card)
+	for card in hand:
+		if card[:3] == 'Ace' and sum > 21:
+			sum = sum - 10
+	return sum
+
+#TODO: create a function to 'pretty print' players hand
+#TODO: create a function that plays for a banker
+
+def playGame(): #plays a single game round
+	deck = createDeck()
+	playerHand = []
+	playerHand.append(drawCard(deck))
+	playerHand.append(drawCard(deck))
+	print('You have {} cards in your hand.'.format(len(playerHand)))
+	for card in playerHand:
+		print('\'{}\''.format(card), end=', ')
+	print()
+	playerAnswer = ''
+	while handValue(playerHand) < 21 and playerAnswer != 'no':
+		print('Would you like to draw a card? Please answer \'yes\' or \'no\'')
+		playerAnswer = input().lower()
+		while playerAnswer not in ['yes', 'no']:
+			print('I\'m sorry I don\'t understand. Please answer \'yes\' or \'no\'')
+			playerAnswer = input()
+		if playerAnswer == 'yes':
+			playerHand.append(drawCard(deck))
+	if handValue(playerHand) == 21 and len(playerHand) == 2:
+		print('Blackjack, you win!')
+	if handValue(playerHand) == 21 and len(playerHand) != 2:
+		print('You have got 21 points but not a straight Blackjack.')
+	if handValue(playerHand) > 21:
+		print('Sorry, you are busted with {}-point hand.'.format(handValue(playerHand)))
+	if playerAnswer == 'no':
+		print('Okay, you have {}-point hand'.format(handValue(playerHand)))
+
+oneMoreGame = 'yes'
+while oneMoreGame == 'yes':
+	print('Hi, are you up for a game of blackjack?')
+	oneMoreGame = input().lower()
+	playGame()
+print('Thanks for the game(s), see you soon.')
