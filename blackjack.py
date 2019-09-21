@@ -74,9 +74,11 @@ def playGame(): #plays a single game round
 	if playerAnswer == 'no':
 		print('Okay, you have {}-point hand'.format(handValue(playerHand)))
 
-oneMoreGame = 'yes'
+print('Hi, are you up for a game of blackjack? If so just say \'yes\'')
+oneMoreGame = input().lower()
 while oneMoreGame == 'yes':
-	print('Hi, are you up for a game of blackjack?')
+	if oneMoreGame == 'yes':
+		playGame()
+	print('Are you up for one more game?')
 	oneMoreGame = input().lower()
-	playGame()
 print('Thanks for the game(s), see you soon.')
