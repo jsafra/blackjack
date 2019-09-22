@@ -10,20 +10,20 @@ def createDeck(): # create a new deck of cards
 	deck = []
 	colors = ['hearts', 'diamonds', 'spades', 'clubs']
 	cards = [2, 3, 4, 5, 6, 7, 8, 9, 10, 'Jack', 'Queen', 'King', 'Ace']
-	for color in colors:
+	for color in colors: # fill deck with every card from each color
 		for card in cards:
 			newCard = str(card) + ' of ' + color
 			deck.append(newCard)
 	return deck
 
 def cardValue(card): # find a value of a card
-	if card[:2].strip().isnumeric() == True:
+	if card[:2].strip().isnumeric() == True: # get value of cards beginning with number
 		value = int(card[:2])
 		return value
-	if card[:4] in ['Jack', 'King'] or card[:5] in ['Queen']:
+	if card[:4] in ['Jack', 'King'] or card[:5] in ['Queen']: # get value of Jack, Queen, and King
 		value = 10
 		return value
-	if card[:3] == 'Ace':
+	if card[:3] == 'Ace': # get value of Ace
 		value = 11
 		return value
 
@@ -52,10 +52,7 @@ def playGame(): #plays a single game round
 	playerHand = []
 	playerHand.append(drawCard(deck))
 	playerHand.append(drawCard(deck))
-	print('You have {} cards in your hand.'.format(len(playerHand)))
-	for card in playerHand:
-		print('\'{}\''.format(card), end=', ')
-	print()
+	print('You have {} cards in your hand with total value of {} points'.format(len(playerHand), handValue(playerHand)))
 	playerAnswer = ''
 	while handValue(playerHand) < 21 and playerAnswer != 'no':
 		print('Would you like to draw a card? Please answer \'yes\' or \'no\'')
@@ -65,6 +62,7 @@ def playGame(): #plays a single game round
 			playerAnswer = input()
 		if playerAnswer == 'yes':
 			playerHand.append(drawCard(deck))
+			print('You have {} cards in your hand with total value of {} points'.format(len(playerHand), handValue(playerHand)))
 	if handValue(playerHand) == 21 and len(playerHand) == 2:
 		print('Blackjack, you win!')
 	if handValue(playerHand) == 21 and len(playerHand) != 2:
