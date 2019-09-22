@@ -4,7 +4,7 @@
 import random, logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 playersHand = 0
-#logging.disable(level=logging.CRITICAL)
+logging.disable(level=logging.CRITICAL)
 
 def createDeck(): # create a new deck of cards
 	deck = []
