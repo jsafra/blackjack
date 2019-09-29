@@ -6,18 +6,28 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 playersHand = 0
 logging.disable(level=logging.CRITICAL)
 
-def createDeck(): # create a new deck of cards
+def createDeck():
+	'''
+	Creates a new deck for a  game
+	No input
+	Output: a deck of cards (list named 'deck')
+	'''
 	deck = []
 	colors = ['hearts', 'diamonds', 'spades', 'clubs']
 	cards = [2, 3, 4, 5, 6, 7, 8, 9, 10, 'Jack', 'Queen', 'King', 'Ace']
 
-	for color in colors: # fill deck with every card from each color
+	for color in colors:
 		for card in cards:
 			newCard = str(card) + ' of ' + color
 			deck.append(newCard)
 	return deck
 
-def cardValue(card): # find a value of a card
+def cardValue(card):
+	'''
+	Establishes a value of a card according to blackjack rules
+	Input: a card from a deck (string)
+	Output: number representing a value of the card (integer)
+	'''
 	if card[:2].strip().isnumeric() == True: # get value of cards beginning with number
 		value = int(card[:2])
 		return value
@@ -31,14 +41,23 @@ def cardValue(card): # find a value of a card
 		return value
 
 
-def drawCard(deck): #deals a card
+def drawCard(deck):
+	'''
+	Draws a card from a deck
+	Input: a deck of cards (list)
+	Output: one card from the deck (string)
+	'''
 	drawnCard = random.choice(deck)
 	deck.remove(drawnCard)
-	print('You have been dealt \'{}\''.format(drawnCard))
 	logging.debug('\'{}\' have been drawn and scratched from the deck'.format(drawnCard))
 	return drawnCard
 
-def handValue(hand): #counts value of cards in hand
+def handValue(hand):
+	'''
+	Counts total value of all cards in hand. Uses function 'cardValue' in the process.
+	Input: list of all cards in a hand (list)
+	Output: total number of points in a hand (integer)
+	'''
 	sum = 0
 	for card in hand:
 		sum += cardValue(card)
@@ -47,7 +66,12 @@ def handValue(hand): #counts value of cards in hand
 			sum = sum - 10
 	return sum
 
-def bankerAI(handPlayer, handCPU): # decide what move should AI make
+def bankerAI(handPlayer, handCPU):
+	'''
+	Decides whether banker should draw a card or unfold his hand.
+	Input: two hands of cards (list). First list passed is a player's hand, second list is banker's
+	Output: AI's decision of what to do from list of options it can make (string)
+	'''
 	humanHand = handPlayer
 	CPUhand = handCPU
 	options = ['draw', 'unfold'] # list options CPU can make
@@ -69,16 +93,26 @@ def bankerAI(handPlayer, handCPU): # decide what move should AI make
 	if handValue(CPUhand) < handValue(humanHand):
 		move = options[0]
 		logging.debug('Banker has less points than the player - it will draw a card')
-	return move # returns 'draw' or 'unfold' to the calling function
+	return move
 
-def showResults(handPlayer, handCPU): # show final hands of the player and banker
+def showResults(handPlayer, handCPU):
+	'''
+	Prints out a result of a single game of blackjack. Uses function 'resolveGame' in the process.
+	Input: two final hands to be resulted (lists)
+	Output: prints out value a player's and banker's hand.
+	'''
 
 	print('You have {} in you hand which makes a {}-point hand'.format(handPlayer, handValue(handPlayer)))
 	print('The banker has {} in his hand which makes a {}-point hand'.format(handCPU, handValue(handCPU)))
 	resolveGame(handPlayer, handCPU)
 
 
-def resolveGame(handPlayer, handCPU): # decide who wins the game
+def resolveGame(handPlayer, handCPU):
+	'''
+	Decides the result of a single game.
+	Input: two final hands to be resulted (lists)
+	Output: prints out a message with results of the game
+	'''
 
 	if handValue(handPlayer) > handValue(handCPU):
 		print('Congratulations, you win.')
@@ -92,15 +126,20 @@ def resolveGame(handPlayer, handCPU): # decide who wins the game
 	if handValue(handPlayer) < handValue(handCPU) and handValue(handCPU) > 21:
 		print('Congratulations, you win and as a bonus the banker is busted.')
 
-def playGame(): #plays a single game round
+def playGame():
+	'''
+	Plays a single round of blackjack. Uses all the functions above.
+	Input: User input according to the instructions printed out
+	Output: Let's user play a single round of blackjack
+	'''
 
 	deck = createDeck()
-	playerHand = [] # list where players card will be added
-	playerHand.append(drawCard(deck)) # draw first card for the player
+	playerHand = [] # list where player's card will be added
+	playerHand.append(drawCard(deck))
 	bankerHand = [] # list where bankers card will be added
-	bankerHand.append(drawCard(deck)) # draw firs card for the player
-	playerHand.append(drawCard(deck)) # draw second card for the player
-	bankerHand.append(drawCard(deck)) # draw second card for the banker
+	bankerHand.append(drawCard(deck))
+	playerHand.append(drawCard(deck))
+	bankerHand.append(drawCard(deck))
 	print('You have {} cards in your hand with total value of {} points'.format(len(playerHand), handValue(playerHand)))
 	playerAnswer = ''
 
@@ -108,7 +147,7 @@ def playGame(): #plays a single game round
 		print('Would you like to draw a card? Please answer \'yes\' or \'no\'')
 		playerAnswer = input().lower()
 
-		while playerAnswer not in ['yes', 'no']: # checks that the game understands player's answer
+		while playerAnswer not in ['yes', 'no']: # checks that player answered yes or no
 			print('I\'m sorry I don\'t understand. Please answer \'yes\' or \'no\'')
 			playerAnswer = input()
 
@@ -116,28 +155,28 @@ def playGame(): #plays a single game round
 			playerHand.append(drawCard(deck))
 			print('You have {} cards in your hand with total value of {} points'.format(len(playerHand), handValue(playerHand)))
 
-	if handValue(playerHand) == 21 and len(playerHand) == 2: # checks for straight blackjack
+	if handValue(playerHand) == 21 and len(playerHand) == 2: # checks for straight blackjack and if so ends the game
 		print('Blackjack, you win!')
 
-	if handValue(playerHand) == 21 and len(playerHand) != 2: # checks for a 21-point hand other than straight blackjack
+	if handValue(playerHand) == 21 and len(playerHand) != 2: # checks for a 21-point hand other than straight blackjack. If so let's banker play
 		print('You have got 21 points but not a straight Blackjack.')
-		move = bankerAI(playerHand, bankerHand)
+		move = bankerAI(playerHand, bankerHand) # stores the decision of AI whether to draw or unfold
 
-		while move == 'draw':
+		while move == 'draw': # if AI decides to draw, draws and re-evalutes the situation after new card is added to banker's hand
 			bankerHand.append(drawCard(deck))
 			move = bankerAI(playerHand, bankerHand)
 
-		showResults(playerHand, bankerHand)
+		showResults(playerHand, bankerHand) # calls for the resolution of the game after AI doesn't want to draw anymore
 
-	if handValue(playerHand) > 21: # checks if player is busted
+	if handValue(playerHand) > 21: # checks if player is busted and if so ends the game
 		print('Sorry, you are busted with {}-point hand.'.format(handValue(playerHand)))
 
-	if playerAnswer == 'no': # stops drawing cards if player says so
+	if playerAnswer == 'no': # stops drawing cards for the player and let's banker play
 		print('Okay, you have {}-point hand'.format(handValue(playerHand)))
-		move = bankerAI(playerHand, bankerHand)
+		move = bankerAI(playerHand, bankerHand) # stores the decision of AI whether to draw or unfold
 		logging.debug('Banker will {}'.format(move))
 
-		while move == 'draw':
+		while move == 'draw': # if AI decides to draw, draws and re-evalutes the situation after new card is added to banker's hand
 			bankerHand.append(drawCard(deck))
 			move = bankerAI(playerHand, bankerHand)
 
