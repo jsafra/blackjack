@@ -87,7 +87,7 @@ def bankerAI(handPlayer, handCPU):
 			logging.debug('Banker has same points as the player and more cards - it will draw a card')
 
 		if len(CPUhand) <= len(humanHand):
-			move = option[0]
+			move = options[0]
 			logging.debug('Banker has same points and same\/less cards than the player - it will not draw')
 
 	if handValue(CPUhand) < handValue(humanHand):
@@ -114,16 +114,29 @@ def resolveGame(handPlayer, handCPU):
 	Output: prints out a message with results of the game
 	'''
 
-	if handValue(handPlayer) > handValue(handCPU):
+	print('-------GAME RESULTS-------')
+	print('Your hand is {}. That\'s {} points.'.format(handPlayer, handValue(handPlayer)))
+	print('Banker\'s hand is {}. That\'s {} points.'.format(handCPU, handValue(handCPU)))
+
+	if handValue(handPlayer) > 21:
+		print('Sorry, you are busted with {}-point hand.'.format(handValue(handPlayer)))
+
+	elif handValue(handPlayer) == 21 and len(handPlayer) == 2: # checks for straight blackjack and if so ends the game
+		print('Blackjack, you win!')
+
+	elif handValue(handPlayer) > handValue(handCPU):
 		print('Congratulations, you win.')
-	if handValue(handPlayer) == handValue(handCPU):
+
+	elif handValue(handPlayer) == handValue(handCPU):
 		if len(handPlayer) < len(handCPU):
 			print('Congratulations, you win.')
 		if len(handPlayer) < len(handCPU):
 			print('Bad luck, you lose this time.')
-	if handValue(handPlayer) < handValue(handCPU) and handValue(handCPU) <= 21:
+
+	elif handValue(handPlayer) < handValue(handCPU) and handValue(handCPU) <= 21:
 		print('Bad luck, you lose this time.')
-	if handValue(handPlayer) < handValue(handCPU) and handValue(handCPU) > 21:
+
+	elif handValue(handPlayer) < handValue(handCPU) and handValue(handCPU) > 21:
 		print('Congratulations, you win and as a bonus the banker is busted.')
 
 def playGame():
@@ -153,26 +166,19 @@ def playGame():
 
 		if playerAnswer == 'yes': # draws a card if player says yes
 			playerHand.append(drawCard(deck))
+			print('Your hand is {}'.format(playerHand))
 			print('You have {} cards in your hand with total value of {} points'.format(len(playerHand), handValue(playerHand)))
 
-	if handValue(playerHand) == 21 and len(playerHand) == 2: # checks for straight blackjack and if so ends the game
-		print('Blackjack, you win!')
-
 	if handValue(playerHand) == 21 and len(playerHand) != 2: # checks for a 21-point hand other than straight blackjack. If so let's banker play
-		print('You have got 21 points but not a straight Blackjack.')
+#		print('You have got 21 points but not a straight Blackjack.')
 		move = bankerAI(playerHand, bankerHand) # stores the decision of AI whether to draw or unfold
 
 		while move == 'draw': # if AI decides to draw, draws and re-evalutes the situation after new card is added to banker's hand
 			bankerHand.append(drawCard(deck))
 			move = bankerAI(playerHand, bankerHand)
 
-		showResults(playerHand, bankerHand) # calls for the resolution of the game after AI doesn't want to draw anymore
-
-	if handValue(playerHand) > 21: # checks if player is busted and if so ends the game
-		print('Sorry, you are busted with {}-point hand.'.format(handValue(playerHand)))
-
 	if playerAnswer == 'no': # stops drawing cards for the player and let's banker play
-		print('Okay, you have {}-point hand'.format(handValue(playerHand)))
+#		print('Okay, you have {}-point hand'.format(handValue(playerHand)))
 		move = bankerAI(playerHand, bankerHand) # stores the decision of AI whether to draw or unfold
 		logging.debug('Banker will {}'.format(move))
 
@@ -180,12 +186,11 @@ def playGame():
 			bankerHand.append(drawCard(deck))
 			move = bankerAI(playerHand, bankerHand)
 
-		showResults(playerHand, bankerHand)
-
 	for card in playerHand, bankerHand: # check if cards in the game did not stay in the deck
 		if card in deck:
 			logging.debug('Oh no, a card has not been scratched from the deck properly')
 
+	showResults(playerHand, bankerHand)
 
 print('Hi, are you up for a game of blackjack? If so just say \'yes\'') # welcome message
 oneMoreGame = input().lower() # stores players answer in lower case letter
