@@ -6,6 +6,51 @@ logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %
 playersHand = 0
 logging.disable(level=logging.CRITICAL)
 
+def generate_cards():
+	'''Generation of all existing playing cards. Problably reading from config file could
+	be  better but it doesn't matter for this moment.
+
+	One playing card will be represented by dictionary {number, pip, name, abbr, (values,)}.
+
+	No input
+	Output: List of playing cards - reusable in repeating games.
+
+	>>> c = generate_cards()
+	>>> len(c)
+	52
+	>>> c[1]['abbr']
+	'3♥'
+	>>> c[11]['values']
+	(10,)
+	>>> c[12]['values']
+	(11, 1)
+	'''
+
+	all_cards = []
+	colors = [('hearts', '♥'), ('diamonds', '♦'), ('spades', '♣'), ('clubs', '♠')]
+	cards = [2, 3, 4, 5, 6, 7, 8, 9, 10, 'Jack', 'Queen', 'King', 'Ace']
+
+	for color in colors:
+		for card in cards:
+			# This is quick and dirty! Make it nicer some day :-)
+			if type(card) is int:
+				values = (card, )
+			elif card in ('Jack', 'Queen', 'King'):
+				values = (10, )
+			else:
+				values = (11, 1)
+
+			new_card = {
+				"number": str(card),
+				"pip": color[0],
+				"name": str(card) + ' of ' + color[0],
+				"abbr": (str(card) if type(card) is int else card[0]) + color[1],
+				"values": values
+			}
+			all_cards.append(new_card)
+	return all_cards
+
+
 def createDeck():
 	'''
 	Creates a new deck for a  game
@@ -13,13 +58,7 @@ def createDeck():
 	Output: a deck of cards (list named 'deck')
 	'''
 	deck = []
-	colors = ['hearts', 'diamonds', 'spades', 'clubs']
-	cards = [2, 3, 4, 5, 6, 7, 8, 9, 10, 'Jack', 'Queen', 'King', 'Ace']
 
-	for color in colors:
-		for card in cards:
-			newCard = str(card) + ' of ' + color
-			deck.append(newCard)
 
 	random.shuffle(deck)
 	return deck
