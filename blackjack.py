@@ -4,7 +4,7 @@
 import random, logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 playersHand = 0
-#logging.disable(level=logging.CRITICAL)
+logging.disable(level=logging.CRITICAL)
 
 def generate_cards():
 	'''Generation of all existing playing cards. Problably reading from config file could
@@ -134,15 +134,15 @@ def bankerAI(handPlayer, handCPU):
 		logging.debug('Banker has less points than the player - it will draw a card')
 	return move
 
-def showResults(handPlayer, handCPU):
+def show_results(handPlayer, handCPU):
 	'''
 	Prints out a result of a single game of blackjack. Uses function 'resolveGame' in the process.
 	Input: two final hands to be resulted (lists)
 	Output: prints out value a player's and banker's hand.
 	'''
 
-	print('You have {} in you hand which makes a {}-point hand'.format(handPlayer, hand_value(handPlayer)))
-	print('The banker has {} in his hand which makes a {}-point hand'.format(handCPU, hand_value(handCPU)))
+	print('You have {} in you hand which makes a {}-point hand'.format([h['abbr'] for h in handPlayer], hand_value(handPlayer)))
+	print('The banker has {} in his hand which makes a {}-point hand'.format([h['abbr'] for h in handCPU], hand_value(handCPU)))
 	resolveGame(handPlayer, handCPU)
 
 
@@ -154,8 +154,8 @@ def resolveGame(handPlayer, handCPU):
 	'''
 
 	print('-------GAME RESULTS-------')
-	print('Your hand is {}. That\'s {} points.'.format(handPlayer, hand_value(handPlayer)))
-	print('Banker\'s hand is {}. That\'s {} points.'.format(handCPU, hand_value(handCPU)))
+	print('Your hand is {}. That\'s {} points.'.format([h['abbr'] for h in handPlayer], hand_value(handPlayer)))
+	print('Banker\'s hand is {}. That\'s {} points.'.format([h['abbr'] for h in handCPU], hand_value(handCPU)))
 
 	if hand_value(handPlayer) > 21:
 		print('Sorry, you are busted with {}-point hand.'.format(hand_value(handPlayer)))
@@ -231,7 +231,7 @@ def playGame():
 		if card in deck:
 			logging.debug('Oh no, a card has not been scratched from the deck properly')
 
-	showResults(playerHand, bankerHand)
+	show_results(playerHand, bankerHand)
 
 if __name__ == "__main__":
 	# some automated tests before playing a game
