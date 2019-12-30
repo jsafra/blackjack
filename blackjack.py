@@ -20,6 +20,8 @@ def createDeck():
 		for card in cards:
 			newCard = str(card) + ' of ' + color
 			deck.append(newCard)
+
+	random.shuffle(deck)
 	return deck
 
 def cardValue(card):
@@ -46,10 +48,15 @@ def drawCard(deck):
 	Draws a card from a deck
 	Input: a deck of cards (list)
 	Output: one card from the deck (string)
+
+	>>> test_deck = ['a', 'b', 'c']
+	>>> drawCard(test_deck)
+	'c'
+	>>> drawCard(test_deck)
+	'b'
 	'''
-	drawnCard = random.choice(deck)
-	deck.remove(drawnCard)
-	logging.debug('\'{}\' have been drawn and scratched from the deck'.format(drawnCard))
+	drawnCard = deck.pop() # get and remove last card of a list (this has been already shuffled)
+	logging.debug("'{}' have been drawn and scratched from the deck".format(drawnCard))
 	return drawnCard
 
 def handValue(hand):
@@ -193,6 +200,11 @@ def playGame():
 	showResults(playerHand, bankerHand)
 
 if __name__ == "__main__":
+	# some automated tests before playing a game
+	import doctest
+	doctest.testmod()
+
+	# let's go play
 	print('Hi, are you up for a game of blackjack? If so just say \'yes\'') # welcome message
 	oneMoreGame = input().lower() # stores players answer in lower case letter
 
