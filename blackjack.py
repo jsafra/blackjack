@@ -4,7 +4,7 @@
 import random, logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 playersHand = 0
-logging.disable(level=logging.CRITICAL)
+#logging.disable(level=logging.CRITICAL)
 
 def generate_cards():
 	'''Generation of all existing playing cards. Problably reading from config file could
@@ -50,66 +50,59 @@ def generate_cards():
 			all_cards.append(new_card)
 	return all_cards
 
-
-def createDeck():
-	'''
-	Creates a new deck for a  game
-	No input
-	Output: a deck of cards (list named 'deck')
+def prepare_deck(all_cards):
+	'''Prepare a new deck for a game and shuffle cards. Repeatin generation of cards doesn't occur anymore.
+	Input: list cards for playing
+	Output: a deck of cards
 	'''
 	deck = []
-
-
+	deck.extend(all_cards)
 	random.shuffle(deck)
+
 	return deck
 
-def cardValue(card):
-	'''
-	Establishes a value of a card according to blackjack rules
-	Input: a card from a deck (string)
-	Output: number representing a value of the card (integer)
-	'''
-	if card[:2].strip().isnumeric() == True: # get value of cards beginning with number
-		value = int(card[:2])
-		return value
-
-	if card[:4] in ['Jack', 'King'] or card[:5] in ['Queen']: # get value of Jack, Queen, and King
-		value = 10
-		return value
-
-	if card[:3] == 'Ace': # get value of Ace
-		value = 11
-		return value
-
-
-def drawCard(deck):
+def draw_card(deck):
 	'''
 	Draws a card from a deck
 	Input: a deck of cards (list)
 	Output: one card from the deck (string)
 
-	>>> test_deck = ['a', 'b', 'c']
-	>>> drawCard(test_deck)
+	>>> test_deck = [{'abbr': 'a'}, {'abbr' :'b'}, {'abbr': 'c'}]
+	>>> draw_card(test_deck)['abbr']
 	'c'
-	>>> drawCard(test_deck)
+	>>> draw_card(test_deck)['abbr']
 	'b'
 	'''
-	drawnCard = deck.pop() # get and remove last card of a list (this has been already shuffled)
-	logging.debug("'{}' have been drawn and scratched from the deck".format(drawnCard))
-	return drawnCard
+	drawn_card = deck.pop() # get and remove last card of a list (this has been already shuffled)
+	logging.debug("'{}' have been drawn and scratched from the deck".format(drawn_card['abbr']))
+	return drawn_card
 
-def handValue(hand):
+def hand_value(hand):
 	'''
 	Counts total value of all cards in hand. Uses function 'cardValue' in the process.
 	Input: list of all cards in a hand (list)
 	Output: total number of points in a hand (integer)
+
+	>>> hand_value([{"values": (10,)}, {"values": (8,)}])
+	18
+	>>> hand_value([{"values": (10,)}, {"values": (8,)}, {"values": (3, )}])
+	21
+	>>> hand_value([{"values": (10,)}, {"values": (11, 1)}]) 
+	21
+	>>> hand_value([{"values": (11, 1)}, {"values": (11, 1)}]) 
+	12
+	>>> hand_value([{"values": (10,)}, {"values": (8,)}, {"values": (11, 1)}]) 
+	19
 	'''
 	sum = 0
-	for card in hand:
-		sum += cardValue(card)
-	for card in hand:
-		if card[:3] == 'Ace' and sum > 21:
-			sum = sum - 10
+
+	for card in sorted(hand, key=lambda c: len(c['values'])):
+		s_value = card['values'][0]
+		for value in card['values'][1:]: # for one-valued card result of slice is an empty tuple and for cycle is skipped
+			if sum + s_value > 21:
+				s_value = value
+		sum += s_value
+
 	return sum
 
 def bankerAI(handPlayer, handCPU):
@@ -122,11 +115,11 @@ def bankerAI(handPlayer, handCPU):
 	CPUhand = handCPU
 	options = ['draw', 'unfold'] # list options CPU can make
 
-	if handValue(CPUhand) > handValue(humanHand):
+	if hand_value(CPUhand) > hand_value(humanHand):
 		move = options[1]
 		logging.debug('Banker has more points than player - it will not draw a card')
 
-	if handValue(CPUhand) == handValue(humanHand):
+	if hand_value(CPUhand) == hand_value(humanHand):
 
 		if len(CPUhand) > len(humanHand):
 			move = options[1]
@@ -136,7 +129,7 @@ def bankerAI(handPlayer, handCPU):
 			move = options[0]
 			logging.debug('Banker has same points and same\/less cards than the player - it will not draw')
 
-	if handValue(CPUhand) < handValue(humanHand):
+	if hand_value(CPUhand) < hand_value(humanHand):
 		move = options[0]
 		logging.debug('Banker has less points than the player - it will draw a card')
 	return move
@@ -148,8 +141,8 @@ def showResults(handPlayer, handCPU):
 	Output: prints out value a player's and banker's hand.
 	'''
 
-	print('You have {} in you hand which makes a {}-point hand'.format(handPlayer, handValue(handPlayer)))
-	print('The banker has {} in his hand which makes a {}-point hand'.format(handCPU, handValue(handCPU)))
+	print('You have {} in you hand which makes a {}-point hand'.format(handPlayer, hand_value(handPlayer)))
+	print('The banker has {} in his hand which makes a {}-point hand'.format(handCPU, hand_value(handCPU)))
 	resolveGame(handPlayer, handCPU)
 
 
@@ -161,28 +154,28 @@ def resolveGame(handPlayer, handCPU):
 	'''
 
 	print('-------GAME RESULTS-------')
-	print('Your hand is {}. That\'s {} points.'.format(handPlayer, handValue(handPlayer)))
-	print('Banker\'s hand is {}. That\'s {} points.'.format(handCPU, handValue(handCPU)))
+	print('Your hand is {}. That\'s {} points.'.format(handPlayer, hand_value(handPlayer)))
+	print('Banker\'s hand is {}. That\'s {} points.'.format(handCPU, hand_value(handCPU)))
 
-	if handValue(handPlayer) > 21:
-		print('Sorry, you are busted with {}-point hand.'.format(handValue(handPlayer)))
+	if hand_value(handPlayer) > 21:
+		print('Sorry, you are busted with {}-point hand.'.format(hand_value(handPlayer)))
 
-	elif handValue(handPlayer) == 21 and len(handPlayer) == 2: # checks for straight blackjack and if so ends the game
+	elif hand_value(handPlayer) == 21 and len(handPlayer) == 2: # checks for straight blackjack and if so ends the game
 		print('Blackjack, you win!')
 
-	elif handValue(handPlayer) > handValue(handCPU):
+	elif hand_value(handPlayer) > hand_value(handCPU):
 		print('Congratulations, you win.')
 
-	elif handValue(handPlayer) == handValue(handCPU):
+	elif hand_value(handPlayer) == hand_value(handCPU):
 		if len(handPlayer) < len(handCPU):
 			print('Congratulations, you win.')
 		if len(handPlayer) < len(handCPU):
 			print('Bad luck, you lose this time.')
 
-	elif handValue(handPlayer) < handValue(handCPU) and handValue(handCPU) <= 21:
+	elif hand_value(handPlayer) < hand_value(handCPU) and hand_value(handCPU) <= 21:
 		print('Bad luck, you lose this time.')
 
-	elif handValue(handPlayer) < handValue(handCPU) and handValue(handCPU) > 21:
+	elif hand_value(handPlayer) < hand_value(handCPU) and hand_value(handCPU) > 21:
 		print('Congratulations, you win and as a bonus the banker is busted.')
 
 def playGame():
@@ -192,17 +185,19 @@ def playGame():
 	Output: Let's user play a single round of blackjack
 	'''
 
-	deck = createDeck()
+	all_cards = generate_cards()
+	deck = prepare_deck(all_cards)
+
 	playerHand = [] # list where player's card will be added
-	playerHand.append(drawCard(deck))
+	playerHand.append(draw_card(deck))
 	bankerHand = [] # list where bankers card will be added
-	bankerHand.append(drawCard(deck))
-	playerHand.append(drawCard(deck))
-	bankerHand.append(drawCard(deck))
-	print('You have {} cards in your hand with total value of {} points'.format(len(playerHand), handValue(playerHand)))
+	bankerHand.append(draw_card(deck))
+	playerHand.append(draw_card(deck))
+	bankerHand.append(draw_card(deck))
+	print('You have {} cards in your hand with total value of {} points'.format(len(playerHand), hand_value(playerHand)))
 	playerAnswer = ''
 
-	while handValue(playerHand) < 21 and playerAnswer != 'no': # keep playing until player says yes or has 21 or more points
+	while hand_value(playerHand) < 21 and playerAnswer != 'no': # keep playing until player says yes or has 21 or more points
 		print('Would you like to draw a card? Please answer \'yes\' or \'no\'')
 		playerAnswer = input().lower()
 
@@ -211,25 +206,25 @@ def playGame():
 			playerAnswer = input()
 
 		if playerAnswer == 'yes': # draws a card if player says yes
-			playerHand.append(drawCard(deck))
+			playerHand.append(draw_card(deck))
 			print('Your hand is {}'.format(playerHand))
-			print('You have {} cards in your hand with total value of {} points'.format(len(playerHand), handValue(playerHand)))
+			print('You have {} cards in your hand with total value of {} points'.format(len(playerHand), hand_value(playerHand)))
 
-	if handValue(playerHand) == 21 and len(playerHand) != 2: # checks for a 21-point hand other than straight blackjack. If so let's banker play
+	if hand_value(playerHand) == 21 and len(playerHand) != 2: # checks for a 21-point hand other than straight blackjack. If so let's banker play
 #		print('You have got 21 points but not a straight Blackjack.')
 		move = bankerAI(playerHand, bankerHand) # stores the decision of AI whether to draw or unfold
 
 		while move == 'draw': # if AI decides to draw, draws and re-evalutes the situation after new card is added to banker's hand
-			bankerHand.append(drawCard(deck))
+			bankerHand.append(draw_card(deck))
 			move = bankerAI(playerHand, bankerHand)
 
 	if playerAnswer == 'no': # stops drawing cards for the player and let's banker play
-#		print('Okay, you have {}-point hand'.format(handValue(playerHand)))
+#		print('Okay, you have {}-point hand'.format(hand_value(playerHand)))
 		move = bankerAI(playerHand, bankerHand) # stores the decision of AI whether to draw or unfold
 		logging.debug('Banker will {}'.format(move))
 
 		while move == 'draw': # if AI decides to draw, draws and re-evalutes the situation after new card is added to banker's hand
-			bankerHand.append(drawCard(deck))
+			bankerHand.append(draw_card(deck))
 			move = bankerAI(playerHand, bankerHand)
 
 	for card in playerHand, bankerHand: # check if cards in the game did not stay in the deck
