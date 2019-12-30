@@ -192,14 +192,13 @@ def playGame():
 
 	showResults(playerHand, bankerHand)
 
-print('Hi, are you up for a game of blackjack? If so just say \'yes\'') # welcome message
-oneMoreGame = input().lower() # stores players answer in lower case letter
+if __name__ == "__main__":
+	print('Hi, are you up for a game of blackjack? If so just say \'yes\'') # welcome message
+	oneMoreGame = input().lower() # stores players answer in lower case letter
 
-while oneMoreGame == 'yes':
-
-	if oneMoreGame == 'yes':
+	while oneMoreGame == 'yes':
 		playGame()
-	print('Are you up for one more game?')
-	oneMoreGame = input().lower()
+		print('Are you up for one more game?')
+		oneMoreGame = input().lower()
 
-print('Thanks for the game(s), see you soon.')
+	print('Thanks for the game(s), see you soon.')
