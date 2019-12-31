@@ -51,7 +51,7 @@ def generate_cards():
 	return all_cards
 
 def prepare_deck(all_cards):
-	'''Prepare a new deck for a game and shuffle cards. Repeatin generation of cards doesn't occur anymore.
+	'''Prepare a new deck for a game and shuffle cards. Repeating generation of cards doesn't occur anymore.
 	Input: list cards for playing
 	Output: a deck of cards
 	'''
@@ -93,6 +93,12 @@ def hand_value(hand):
 	12
 	>>> hand_value([{"values": (10,)}, {"values": (8,)}, {"values": (11, 1)}]) 
 	19
+	>>> hand_value([{"values": (10,)}, {"values": (8,)}, {"values": (5, )}])
+	23
+	>>> hand_value([{"values": (11, 1)}, {"values": (8,)}, {"values": (5, )}, {"values": (10, )}])
+	24
+	>>> hand_value([{"values": (11, 1)}, {"values": (9,)}, {"values": (11, 1)}])
+	21
 	'''
 	sum = 0
 
