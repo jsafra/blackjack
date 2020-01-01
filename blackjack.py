@@ -2,8 +2,9 @@
 '''blackJack.py let's user play a game of Black Jack against a dealer'''
 
 import random, logging
+from blackjack_cli import *
+
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-playersHand = 0
 logging.disable(level=logging.CRITICAL)
 
 def generate_cards():
@@ -272,12 +273,10 @@ if __name__ == "__main__":
 	doctest.testmod()
 
 	# let's go play
-	print('Hi, are you up for a game of blackjack? If so just say \'yes\'') # welcome message
-	oneMoreGame = input().lower() # stores players answer in lower case letter
+	one_more_game = user_input(prompt="Hi, are you up for a game of blackjack? If so just say 'yes': ")
 
-	while oneMoreGame == 'yes':
-		play_game()
-		print('Are you up for one more game?')
-		oneMoreGame = input().lower()
+	while one_more_game == 'yes':
+		playGame()
+		one_more_game = user_input(prompt = "Are you up for one more game? If so just say 'yes': ")
 
 	print('Thanks for the game(s), see you soon.')
