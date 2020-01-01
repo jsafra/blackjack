@@ -140,6 +140,29 @@ def bankerAI(handPlayer, handCPU):
 		logging.debug('Banker has less points than the player - it will draw a card')
 	return move
 
+def hand_status(player = {"name": "Player", "role": "player", "hand": []}):
+	'''Returns a text message with cards and total points.
+	
+	Parameters
+	----------
+	hand : list
+		hand is a list of cards. Every card is represented as a dictionary, this 
+		function expect presence of 'abbr' key and 'value' consequently.
+	player: dictionary
+
+	Returns
+	-------
+	string
+		Human readable string to be displayed to player.	
+	'''
+	if player['role'] == "player":
+		status = "You have {} in your hand which makes a {}-point hand."
+	else:
+		status = "The dealer has {} in his hand which makes a {}-point hand."
+	status = status.format([h['abbr'] for h in player['hand']], hand_value(player['hand']))
+	return status
+
+
 def show_results(handPlayer, handCPU):
 	'''
 	Prints out a result of a single game of blackjack. Uses function 'resolveGame' in the process.
@@ -184,37 +207,41 @@ def resolveGame(handPlayer, handCPU):
 	elif hand_value(handPlayer) < hand_value(handCPU) and hand_value(handCPU) > 21:
 		print('Congratulations, you win and as a bonus the banker is busted.')
 
-def playGame():
-	'''
-	Plays a single round of blackjack. Uses all the functions above.
+def play_game():
+	'''Plays a single round of blackjack. Uses all the functions above.
 	Input: User input according to the instructions printed out
 	Output: Let's user play a single round of blackjack
 	'''
 
 	all_cards = generate_cards()
 	deck = prepare_deck(all_cards)
+	
+	# Represent players as a dictionary. May be the hand shouldn't be part of this dictionary?
+	# TODO: dynamic number of players with various names
+	players = [
+		{"name": "John Doe", "role": "player", "hand": []},
+		{"name": "Anonymous Dealer", "role": "dealer", "hand": []}
+	]
 
-	playerHand = [] # list where player's card will be added
-	playerHand.append(draw_card(deck))
-	bankerHand = [] # list where bankers card will be added
-	bankerHand.append(draw_card(deck))
-	playerHand.append(draw_card(deck))
-	bankerHand.append(draw_card(deck))
-	print('You have {} cards in your hand with total value of {} points'.format(len(playerHand), hand_value(playerHand)))
+	for i in range(0, 2):
+		for player in players:
+			player['hand'].append(draw_card(deck))
+
+	print(hand_status(players[0]))
 	playerAnswer = ''
 
-	while hand_value(playerHand) < 21 and playerAnswer != 'no': # keep playing until player says yes or has 21 or more points
-		print('Would you like to draw a card? Please answer \'yes\' or \'no\'')
-		playerAnswer = input().lower()
+	for player in [p for p in players if p['role'] == "player"]:
+		while hand_value(player['hand']) < 21 and playerAnswer != 'no': # keep playing until player says yes or has 21 or more points
+			print('Would you like to draw a card? Please answer \'yes\' or \'no\'')
+			playerAnswer = input().lower()
 
-		while playerAnswer not in ['yes', 'no']: # checks that player answered yes or no
-			print('I\'m sorry I don\'t understand. Please answer \'yes\' or \'no\'')
-			playerAnswer = input()
+			while playerAnswer not in ['yes', 'no']: # checks that player answered yes or no
+				print('I\'m sorry I don\'t understand. Please answer \'yes\' or \'no\'')
+				playerAnswer = input()
 
-		if playerAnswer == 'yes': # draws a card if player says yes
-			playerHand.append(draw_card(deck))
-			print('Your hand is {}'.format(playerHand))
-			print('You have {} cards in your hand with total value of {} points'.format(len(playerHand), hand_value(playerHand)))
+			if playerAnswer == 'yes': # draws a card if player says yes
+				player['hand'].append(draw_card(deck))
+				print(hand_status(players[0]))
 
 	if hand_value(playerHand) == 21 and len(playerHand) != 2: # checks for a 21-point hand other than straight blackjack. If so let's banker play
 #		print('You have got 21 points but not a straight Blackjack.')
@@ -249,7 +276,7 @@ if __name__ == "__main__":
 	oneMoreGame = input().lower() # stores players answer in lower case letter
 
 	while oneMoreGame == 'yes':
-		playGame()
+		play_game()
 		print('Are you up for one more game?')
 		oneMoreGame = input().lower()
 
