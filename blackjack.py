@@ -208,17 +208,70 @@ def resolveGame(handPlayer, handCPU):
 	elif hand_value(handPlayer) < hand_value(handCPU) and hand_value(handCPU) > 21:
 		print('Congratulations, you win and as a bonus the banker is busted.')
 
-def play_game():
+
+def player_action(player, deck):
+	'''Encapsulates a player actions
+
+	Parameters
+	----------
+	player : dictionary
+		Dictionary representing player. Presence of 'hand' key is expected.  
+	deck : dictionary
+		List of cards. Every card is represented as a dictionary, this 
+		function expect presence of 'abbr' key and 'value' consequently.
+
+	Returns
+	-------
+	str
+		The last answer of player
+	'''
+	print(hand_status(player))
+	player_answer = ''
+
+	while hand_value(player['hand']) < 21 and player_answer != 'no': # keep playing until player says yes or has 21 or more points
+		player_answer = user_input(prompt="Would you like to draw a card? Please answer yes/no: ", accept_values = ['yes', 'no'])
+					
+		if player_answer == 'yes': # draws a card if player says yes
+			player['hand'].append(draw_card(deck))
+			print(hand_status(player))
+
+	# this should be useless after dealer strategy reimplementation
+	return player_answer
+
+def dealer_action(dealer, player, deck):
+	'''Encapsulates dealer actions
+
+	Parameters
+	----------
+	dealer : dictionary
+		Dictionary representing player. Presence of 'hand' key is expected.  
+	player : dictionary
+		Dictionary representing player. Presence of 'hand' key is expected.  
+	deck : dictionary
+		List of cards. Every card is represented as a dictionary, this 
+		function expect presence of 'abbr' key and 'value' consequently.
+
+	Returns
+	-------
+	None		
+	'''
+	move = bankerAI(player['hand'], dealer['hand']) # stores the decision of AI whether to draw or unfold
+
+	while move == 'draw': # if AI decides to draw, draws and re-evalutes the situation after new card is added to banker's hand
+		dealer['hand'].append(draw_card(deck))
+		move = bankerAI(player['hand'], dealer['hand'])
+
+
+def play_game(all_cards):
 	'''Plays a single round of blackjack. Uses all the functions above.
 	Input: User input according to the instructions printed out
 	Output: Let's user play a single round of blackjack
 	'''
 
-	all_cards = generate_cards()
 	deck = prepare_deck(all_cards)
 	
 	# Represent players as a dictionary. May be the hand shouldn't be part of this dictionary?
-	# TODO: dynamic number of players with various names
+	# TODO: dynamic number of players with various names. But ensure that dealer is the last one and only one
 	players = [
 		{"name": "John Doe", "role": "player", "hand": []},
 		{"name": "Anonymous Dealer", "role": "dealer", "hand": []}
@@ -227,45 +280,27 @@ def play_game():
 	for i in range(0, 2):
 		for player in players:
 			player['hand'].append(draw_card(deck))
+	
+	for player in players[:-1]: # without dealer who is the last "player"
+		player_answer = player_action(player, deck)
 
-	print(hand_status(players[0]))
-	playerAnswer = ''
+		# FIXME: If there were more than one player then a dealer strategy wouldn't be correct!! 
+		# Following is a mix of game evaluation and dealer strategy - it should be separated.
+		if hand_value(player['hand']) == 21 and len(player['hand']) != 2: 
+			# Player has got 21 points but not a straight Blackjack
+			dealer = players[-1]
+			dealer_action(dealer, player, deck)
 
-	for player in [p for p in players if p['role'] == "player"]:
-		while hand_value(player['hand']) < 21 and playerAnswer != 'no': # keep playing until player says yes or has 21 or more points
-			print('Would you like to draw a card? Please answer \'yes\' or \'no\'')
-			playerAnswer = input().lower()
+	if player_answer == 'no': # stops drawing cards for the player and let's banker play
+		# print('Okay, you have {}-point hand'.format(hand_value(playerHand)))
+		dealer = players[-1]
+		dealer_action(dealer, player, deck)
 
-			while playerAnswer not in ['yes', 'no']: # checks that player answered yes or no
-				print('I\'m sorry I don\'t understand. Please answer \'yes\' or \'no\'')
-				playerAnswer = input()
+	#for card in playerHand, bankerHand: # check if cards in the game did not stay in the deck
+	#	if card in deck:
+	#		logging.debug('Oh no, a card has not been scratched from the deck properly')
 
-			if playerAnswer == 'yes': # draws a card if player says yes
-				player['hand'].append(draw_card(deck))
-				print(hand_status(players[0]))
-
-	if hand_value(playerHand) == 21 and len(playerHand) != 2: # checks for a 21-point hand other than straight blackjack. If so let's banker play
-#		print('You have got 21 points but not a straight Blackjack.')
-		move = bankerAI(playerHand, bankerHand) # stores the decision of AI whether to draw or unfold
-
-		while move == 'draw': # if AI decides to draw, draws and re-evalutes the situation after new card is added to banker's hand
-			bankerHand.append(draw_card(deck))
-			move = bankerAI(playerHand, bankerHand)
-
-	if playerAnswer == 'no': # stops drawing cards for the player and let's banker play
-#		print('Okay, you have {}-point hand'.format(hand_value(playerHand)))
-		move = bankerAI(playerHand, bankerHand) # stores the decision of AI whether to draw or unfold
-		logging.debug('Banker will {}'.format(move))
-
-		while move == 'draw': # if AI decides to draw, draws and re-evalutes the situation after new card is added to banker's hand
-			bankerHand.append(draw_card(deck))
-			move = bankerAI(playerHand, bankerHand)
-
-	for card in playerHand, bankerHand: # check if cards in the game did not stay in the deck
-		if card in deck:
-			logging.debug('Oh no, a card has not been scratched from the deck properly')
-
-	show_results(playerHand, bankerHand)
+	show_results(players[0]['hand'], players[-1]['hand'])
 
 if __name__ == "__main__":
 	# some automated tests before playing a game
@@ -276,7 +311,7 @@ if __name__ == "__main__":
 	one_more_game = user_input(prompt="Hi, are you up for a game of blackjack? If so just say 'yes': ")
 
 	while one_more_game == 'yes':
-		playGame()
+		play_game(generate_cards())
 		one_more_game = user_input(prompt = "Are you up for one more game? If so just say 'yes': ")
 
 	print('Thanks for the game(s), see you soon.')
