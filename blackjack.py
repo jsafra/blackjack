@@ -2,7 +2,7 @@
 '''blackJack.py let's user play a game of Black Jack against a dealer'''
 
 import random, logging
-from blackjack_cli import *
+from blackjack_cli import user_input, label_print
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logging.disable(level=logging.CRITICAL)
@@ -149,13 +149,27 @@ def show_results(players):
 
 	for player in players[:-1]:
 		print(hand_status(player))
-		resolve_game(players[0], players[1])
+		result = resolve_game(players[0], players[1])
+		print(result[1])
 
 
 def resolve_game(player, dealer):
 	'''Decides the result of a single game.
-	Input: two final hands to be resulted (lists)
-	Output: prints out a message with results of the game
+	
+	Parameters
+	----------
+	player : dict
+		Dictionary representing a player
+	dealer : dict
+		Dictionary representing a dealer
+
+	Returns
+	-------
+	resultCode
+		Text code representing a result of a game. 
+		Values: PW (= player wins), DW (= dealer wins), SO (= stand off)
+	resultText
+		Text message with a game result.
 	'''
 	player_score = hand_value(player['hand'])
 	player_blackjack = player_score == 21 and len(player['hand']) == 2
@@ -163,28 +177,28 @@ def resolve_game(player, dealer):
 	dealer_score = hand_value(dealer['hand'])
 
 	if player_score > 21:
-		print("Sorry, you are busted.")
+		return ("DW", "Sorry, you are busted.")
 
 	# FIXME: If dealer has blackjack too then game has no winner.
 	elif player_blackjack: # checks for straight blackjack and if so ends the game
-		print("Blackjack, you win!")
+		return ("PW", "Blackjack, you win!")
 
 	elif player_score > dealer_score:
-		print("Congratulations, you win.")
+		return ("PW", "Congratulations, you win.")
 
 	elif player_score == dealer_score:
-		if len(player['hand']) < len(dealer['hand']):
-			print('Congratulations, you win.')
-		if len(player['hand']) > len(dealer['hand']):
-			print('Bad luck, you lose this time.')
+		return ("SO", "Stand off - neither dealer nor player win.")
+		# NOTE: I haven't found such rule till now
+		# if len(player['hand']) < len(dealer['hand']):
+		#	return "Congratulations, you win."
+		# if len(player['hand']) > len(dealer['hand']):
+		#		return "Bad luck, you lose this time."
 
 	elif player_score < dealer_score and dealer_score <= 21:
-		print('Bad luck, you lose this time.')
+		return ("DW", "Bad luck, you lose this time.")
 
 	elif player_score < dealer_score and dealer_score > 21:
-		print('Congratulations, you win and as a bonus the banker is busted.')
-
-	print()
+		return ("PW", "Congratulations, you win and as a bonus the banker is busted.")
 
 
 def player_turn(player, deck):
@@ -255,10 +269,11 @@ def play_game(all_cards):
 	Output: Let's user play a single round of blackjack
 	'''
 
+	# NOTE: Blackjack is player with 1-8 decks of card. It should be easy to implement this now.
 	deck = prepare_deck(all_cards)
 	
 	# Represent players as a dictionary. May be the hand shouldn't be part of this dictionary?
-	# TODO: dynamic number of players with various names. But ensure that dealer is the last one and only one
+	# TODO: dynamic number of players with various names. But ensure that dealer is the last one and only one !!
 	players = [
 		{"name": "John Doe", "role": "player", "hand": [], "turn": player_turn},
 		{"name": "Anonymous Dealer", "role": "dealer", "hand": [], "turn": dealer_turn}
@@ -266,7 +281,8 @@ def play_game(all_cards):
 
 	for i in range(0, 2): 
 		for player in players:
-			# TODO: In some varitions of blackjack dealer gets only first card at the start of a game
+			# NOTE: In some variations of blackjack dealer gets only first card at the start of a game
+			# or distinguish 'up card' and 'hole card' etc.
 			player['hand'].append(draw_card(deck))
 	
 	for player in players:
