@@ -33,7 +33,7 @@ def generate_cards():
 
 	for color in colors:
 		for card in cards:
-			# This is quick and dirty! Make it nicer some day :-)
+			# TODO: This is quick and dirty! Make it nicer some day :-)
 			if type(card) is int:
 				values = (card, )
 			elif card in ('Jack', 'Queen', 'King'):
@@ -79,27 +79,25 @@ def draw_card(deck):
 	return drawn_card
 
 def hand_value(hand):
-	'''
-	Counts total value of all cards in hand. Uses function 'cardValue' in the process.
-	Input: list of all cards in a hand (list)
-	Output: total number of points in a hand (integer)
+	'''Counts total value of all cards in hand. 
 
+	Parameters
+	----------
+	hand : `list`
+		List of all cards in a hand. Every card is represented by `dict` - for more details look
+		at `generate_cards` function.
+	
+	Returns
+	-------
+	int
+		Total number of points in a hand (integer)
+
+	Examples
+	--------
 	>>> hand_value([{"values": (10,)}, {"values": (8,)}])
 	18
-	>>> hand_value([{"values": (10,)}, {"values": (8,)}, {"values": (3, )}])
-	21
-	>>> hand_value([{"values": (10,)}, {"values": (11, 1)}]) 
-	21
-	>>> hand_value([{"values": (11, 1)}, {"values": (11, 1)}]) 
-	12
-	>>> hand_value([{"values": (10,)}, {"values": (8,)}, {"values": (11, 1)}]) 
-	19
-	>>> hand_value([{"values": (10,)}, {"values": (8,)}, {"values": (5, )}])
-	23
-	>>> hand_value([{"values": (11, 1)}, {"values": (8,)}, {"values": (5, )}, {"values": (10, )}])
-	24
-	>>> hand_value([{"values": (11, 1)}, {"values": (9,)}, {"values": (11, 1)}])
-	21
+
+	For more examples look at related unittests.
 	'''
 	sum = 0
 
@@ -195,7 +193,6 @@ def resolve_game(player, dealer):
 	elif dealer_score > player_score:
 		return ("DW", "Bad luck, you lose this time.")
 
-
 	elif player_score == dealer_score:
 		return ("SO", "Stand off - neither dealer nor player win.")
 		# NOTE: I haven't found such rule till now
@@ -203,6 +200,9 @@ def resolve_game(player, dealer):
 		#	return "Congratulations, you win."
 		# if len(player['hand']) > len(dealer['hand']):
 		#		return "Bad luck, you lose this time."
+	
+	else:
+		raise NotImplementedError("Something's wrong. Developer didn't think about some specific situation :-)")
 
 def player_turn(player, deck):
 	'''Encapsulates a player actions
