@@ -112,35 +112,6 @@ def hand_value(hand):
 
 	return sum
 
-def bankerAI(handPlayer, handCPU):
-	'''
-	Decides whether banker should draw a card or unfold his hand.
-	Input: two hands of cards (list). First list passed is a player's hand, second list is banker's
-	Output: AI's decision of what to do from list of options it can make (string)
-	'''
-	humanHand = handPlayer
-	CPUhand = handCPU
-	options = ['draw', 'unfold'] # list options CPU can make
-
-	if hand_value(CPUhand) > hand_value(humanHand):
-		move = options[1]
-		logging.debug('Banker has more points than player - it will not draw a card')
-
-	if hand_value(CPUhand) == hand_value(humanHand):
-
-		if len(CPUhand) > len(humanHand):
-			move = options[1]
-			logging.debug('Banker has same points as the player and more cards - it will draw a card')
-
-		if len(CPUhand) <= len(humanHand):
-			move = options[0]
-			logging.debug('Banker has same points and same\/less cards than the player - it will not draw')
-
-	if hand_value(CPUhand) < hand_value(humanHand):
-		move = options[0]
-		logging.debug('Banker has less points than the player - it will draw a card')
-	return move
-
 def hand_status(player = {"name": "Player", "role": "player", "hand": []}):
 	'''Returns a text message with cards and total points.
 	
@@ -164,67 +135,75 @@ def hand_status(player = {"name": "Player", "role": "player", "hand": []}):
 	return status
 
 
-def show_results(handPlayer, handCPU):
+def show_results(players):
 	'''
-	Prints out a result of a single game of blackjack. Uses function 'resolveGame' in the process.
+	Prints out a result of a single game of blackjack. Uses function 'resolve_game' in the process.
 	Input: two final hands to be resulted (lists)
 	Output: prints out value a player's and banker's hand.
 	'''
 
-	print('You have {} in you hand which makes a {}-point hand'.format([h['abbr'] for h in handPlayer], hand_value(handPlayer)))
-	print('The banker has {} in his hand which makes a {}-point hand'.format([h['abbr'] for h in handCPU], hand_value(handCPU)))
-	resolveGame(handPlayer, handCPU)
+	label_print("** GAME RESULTS **", decoration="*")
+
+	print(hand_status(players[-1]))
+	print()
+
+	for player in players[:-1]:
+		print(hand_status(player))
+		resolve_game(players[0], players[1])
 
 
-def resolveGame(handPlayer, handCPU):
-	'''
-	Decides the result of a single game.
+def resolve_game(player, dealer):
+	'''Decides the result of a single game.
 	Input: two final hands to be resulted (lists)
 	Output: prints out a message with results of the game
 	'''
+	player_score = hand_value(player['hand'])
+	player_blackjack = player_score == 21 and len(player['hand']) == 2
 
-	print('-------GAME RESULTS-------')
-	print('Your hand is {}. That\'s {} points.'.format([h['abbr'] for h in handPlayer], hand_value(handPlayer)))
-	print('Banker\'s hand is {}. That\'s {} points.'.format([h['abbr'] for h in handCPU], hand_value(handCPU)))
+	dealer_score = hand_value(dealer['hand'])
 
-	if hand_value(handPlayer) > 21:
-		print('Sorry, you are busted with {}-point hand.'.format(hand_value(handPlayer)))
+	if player_score > 21:
+		print("Sorry, you are busted.")
 
-	elif hand_value(handPlayer) == 21 and len(handPlayer) == 2: # checks for straight blackjack and if so ends the game
-		print('Blackjack, you win!')
+	# FIXME: If dealer has blackjack too then game has no winner.
+	elif player_blackjack: # checks for straight blackjack and if so ends the game
+		print("Blackjack, you win!")
 
-	elif hand_value(handPlayer) > hand_value(handCPU):
-		print('Congratulations, you win.')
+	elif player_score > dealer_score:
+		print("Congratulations, you win.")
 
-	elif hand_value(handPlayer) == hand_value(handCPU):
-		if len(handPlayer) < len(handCPU):
+	elif player_score == dealer_score:
+		if len(player['hand']) < len(dealer['hand']):
 			print('Congratulations, you win.')
-		if len(handPlayer) < len(handCPU):
+		if len(player['hand']) > len(dealer['hand']):
 			print('Bad luck, you lose this time.')
 
-	elif hand_value(handPlayer) < hand_value(handCPU) and hand_value(handCPU) <= 21:
+	elif player_score < dealer_score and dealer_score <= 21:
 		print('Bad luck, you lose this time.')
 
-	elif hand_value(handPlayer) < hand_value(handCPU) and hand_value(handCPU) > 21:
+	elif player_score < dealer_score and dealer_score > 21:
 		print('Congratulations, you win and as a bonus the banker is busted.')
 
+	print()
 
-def player_action(player, deck):
+
+def player_turn(player, deck):
 	'''Encapsulates a player actions
 
 	Parameters
 	----------
-	player : dictionary
+	player : `dict`
 		Dictionary representing player. Presence of 'hand' key is expected.  
-	deck : dictionary
+	deck : `dict`
 		List of cards. Every card is represented as a dictionary, this 
 		function expect presence of 'abbr' key and 'value' consequently.
 
 	Returns
 	-------
-	str
-		The last answer of player
+	`None`
 	'''
+	logging.debug("This is as player turn")
+
 	print(hand_status(player))
 	player_answer = ''
 
@@ -235,32 +214,40 @@ def player_action(player, deck):
 			player['hand'].append(draw_card(deck))
 			print(hand_status(player))
 
-	# this should be useless after dealer strategy reimplementation
-	return player_answer
 
-def dealer_action(dealer, player, deck):
-	'''Encapsulates dealer actions
+def dealer_turn(dealer, deck, soft17_draw = False):
+	'''Encapsulates dealer actions.
+
+	Implements rules for dealer turn. When dealer has less than 17 points 
+	he must draw a card. When dealer has 17 and more points he mustn't 
+	draw card.
 
 	Parameters
 	----------
-	dealer : dictionary
+	dealer : `dict`
 		Dictionary representing player. Presence of 'hand' key is expected.  
-	player : dictionary
-		Dictionary representing player. Presence of 'hand' key is expected.  
-	deck : dictionary
+	deck : `list`
 		List of cards. Every card is represented as a dictionary, this 
 		function expect presence of 'abbr' key and 'value' consequently.
+	soft17_draw : `Bool`, optional
+		If `True` then dealer draw a new card when having soft-17 (i.e. 17 point
+		with one Ace)
 
 	Returns
 	-------
-	None		
+	`None`		
 	'''
-	move = bankerAI(player['hand'], dealer['hand']) # stores the decision of AI whether to draw or unfold
-
-	while move == 'draw': # if AI decides to draw, draws and re-evalutes the situation after new card is added to banker's hand
+	logging.debug("This is as dealer turn")
+	
+	# TODO: Implement soft17_draw logic
+	while hand_value(dealer['hand']) < 17:
+		logging.debug(hand_status(dealer))
+		logging.debug("Dealer has less than 17 points - he must draw a card")
 		dealer['hand'].append(draw_card(deck))
-		move = bankerAI(player['hand'], dealer['hand'])
-
+	
+	logging.debug(hand_status(dealer))
+	logging.debug("Dealer has 17 points or more - he must stand up")
+	
 
 def play_game(all_cards):
 	'''Plays a single round of blackjack. Uses all the functions above.
@@ -273,34 +260,20 @@ def play_game(all_cards):
 	# Represent players as a dictionary. May be the hand shouldn't be part of this dictionary?
 	# TODO: dynamic number of players with various names. But ensure that dealer is the last one and only one
 	players = [
-		{"name": "John Doe", "role": "player", "hand": []},
-		{"name": "Anonymous Dealer", "role": "dealer", "hand": []}
+		{"name": "John Doe", "role": "player", "hand": [], "turn": player_turn},
+		{"name": "Anonymous Dealer", "role": "dealer", "hand": [], "turn": dealer_turn}
 	]
 
-	for i in range(0, 2):
+	for i in range(0, 2): 
 		for player in players:
+			# TODO: In some varitions of blackjack dealer gets only first card at the start of a game
 			player['hand'].append(draw_card(deck))
 	
-	for player in players[:-1]: # without dealer who is the last "player"
-		player_answer = player_action(player, deck)
+	for player in players:
+		  player['turn'](player, deck)
 
-		# FIXME: If there were more than one player then a dealer strategy wouldn't be correct!! 
-		# Following is a mix of game evaluation and dealer strategy - it should be separated.
-		if hand_value(player['hand']) == 21 and len(player['hand']) != 2: 
-			# Player has got 21 points but not a straight Blackjack
-			dealer = players[-1]
-			dealer_action(dealer, player, deck)
+	show_results(players)
 
-	if player_answer == 'no': # stops drawing cards for the player and let's banker play
-		# print('Okay, you have {}-point hand'.format(hand_value(playerHand)))
-		dealer = players[-1]
-		dealer_action(dealer, player, deck)
-
-	#for card in playerHand, bankerHand: # check if cards in the game did not stay in the deck
-	#	if card in deck:
-	#		logging.debug('Oh no, a card has not been scratched from the deck properly')
-
-	show_results(players[0]['hand'], players[-1]['hand'])
 
 if __name__ == "__main__":
 	# some automated tests before playing a game
@@ -311,6 +284,7 @@ if __name__ == "__main__":
 	one_more_game = user_input(prompt="Hi, are you up for a game of blackjack? If so just say 'yes': ")
 
 	while one_more_game == 'yes':
+		label_print("This is a new game - enjoy it.")
 		play_game(generate_cards())
 		one_more_game = user_input(prompt = "Are you up for one more game? If so just say 'yes': ")
 

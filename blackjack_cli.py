@@ -1,4 +1,4 @@
-'''Helper module for blackjack game'''
+'''Helper module for a blackjack game'''
 
 def user_input(**kwargs):
     '''Calls for user input from CLI with defined prompt.
@@ -39,5 +39,27 @@ def user_input(**kwargs):
     
     return raw_input
 
+def label_print(message, decoration = "-", extra_line = True):
+    '''Prints a message in an ascii frame.
+
+    Parameters
+    ----------
+    message : `str`
+        Message to be printed.
+    decoration: `char`
+        Character to be used for frame building. Default '-'.
+    extra_line: `bool`
+        If `True` then an additional empty lines is added before and after message. Default `True`
+    '''
+    if extra_line:
+        print()
+    print(decoration*len(message))
+    print(message)
+    print(decoration*len(message))
+    if extra_line:
+        print()
+
 if __name__ == "__main__":
-    print(user_input(prompt="Neco mi rekni:", accept_values=['yes', 'no'], case_sensitive=True))
+    a = user_input(prompt="Neco mi rekni:", accept_values=['yes', 'no'], case_sensitive=True)
+
+    label_print("You said " + a)
