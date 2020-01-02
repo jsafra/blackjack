@@ -175,16 +175,26 @@ def resolve_game(player, dealer):
 	player_blackjack = player_score == 21 and len(player['hand']) == 2
 
 	dealer_score = hand_value(dealer['hand'])
+	dealer_blackjack = dealer_score == 21 and len(dealer['hand']) == 2
 
 	if player_score > 21:
 		return ("DW", "Sorry, you are busted.")
+	
+	elif dealer_score > 21:
+		return ("PW", "You win - dealer is busted.")
 
-	# FIXME: If dealer has blackjack too then game has no winner.
-	elif player_blackjack: # checks for straight blackjack and if so ends the game
+	elif player_blackjack and not dealer_blackjack: # checks for straight blackjack and if so ends the game
 		return ("PW", "Blackjack, you win!")
+
+	elif dealer_blackjack and not player_blackjack:
+		return ("DW", "Dealer has got a blackjack, you lose this game!")
 
 	elif player_score > dealer_score:
 		return ("PW", "Congratulations, you win.")
+
+	elif dealer_score > player_score:
+		return ("DW", "Bad luck, you lose this time.")
+
 
 	elif player_score == dealer_score:
 		return ("SO", "Stand off - neither dealer nor player win.")
@@ -193,13 +203,6 @@ def resolve_game(player, dealer):
 		#	return "Congratulations, you win."
 		# if len(player['hand']) > len(dealer['hand']):
 		#		return "Bad luck, you lose this time."
-
-	elif player_score < dealer_score and dealer_score <= 21:
-		return ("DW", "Bad luck, you lose this time.")
-
-	elif player_score < dealer_score and dealer_score > 21:
-		return ("PW", "Congratulations, you win and as a bonus the banker is busted.")
-
 
 def player_turn(player, deck):
 	'''Encapsulates a player actions

@@ -35,8 +35,8 @@ class ResolveGameTests(unittest.TestCase):
             result = resolve_game(player, dealer)
             self.assertEqual("DW", result[0])
 
-    def test_blackjack_player_wins(self):
-        """Player wins if he has got black jack."""
+    def test_blackjack_wins(self):
+        """Player wins if he has got black jack. Except his oponent has got blackjack too"""
         test_data = [
             (
                 {"hand": [{"values": (11, 1)}, {"values" : (10, )}]},
@@ -56,6 +56,10 @@ class ResolveGameTests(unittest.TestCase):
             result = resolve_game(player, dealer)
             self.assertEqual("PW", result[0])
 
+        for dealer, player in test_data:
+            result = resolve_game(player, dealer)
+            self.assertEqual("DW", result[0])
+
     def test_higher_score_wins(self):
         """Winner is's closer to the 21 than defeated"""
         test_data = [
@@ -72,9 +76,27 @@ class ResolveGameTests(unittest.TestCase):
         for player, dealer in test_data:
             result = resolve_game(player, dealer)
             self.assertEqual("PW", result[0])
+
         for dealer, player in test_data:
             result = resolve_game(player, dealer)
             self.assertEqual("DW", result[0])
+
+    def test_blackjack_stand_off(self):
+        """Stand off when player has got and blackjack as well as dealer"""
+        test_data = [
+            (
+                {"hand": [{"values": (11, 1)}, {"values" : (10, )}]},
+                {"hand": [{"values": (10, )}, {"values" : (11, 1)}]}
+            )
+        ]
+
+        for player, dealer in test_data:
+            result = resolve_game(player, dealer)
+            self.assertEqual("SO", result[0])
+
+        for dealer, player in test_data:
+            result = resolve_game(player, dealer)
+            self.assertEqual("SO", result[0])
 
 if __name__ == "__main__":
     unittest.main()
