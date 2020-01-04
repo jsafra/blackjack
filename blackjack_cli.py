@@ -48,6 +48,92 @@ def user_input(prompt = "", pattern = None, expected_type = str):
                 return raw_input
         print("Invalid input. Please answer in correct format.")
 
+
+def _prepare_options_dictionary(options, case_sensitive = False):
+    """Prepares dictionary from list of options. If option is iterable than first value
+    if a key and all values (including the first one) are values. 
+    
+    Remember: `str` is  iterable too :-)
+
+    
+    
+    For internal use in `user_choice` function.
+
+    Parameters
+    ----------
+    options : collection of options
+
+    case_sensitive : `bool`
+        If `False` then all strings are lowercased.
+
+    Returns
+    -------
+    `dict`
+
+    Examples
+    --------
+    >>> _prepare_options_dictionary(["blah"]) 
+    {'b': ['b', 'l', 'a', 'h']}
+    """
+
+    options_dict = {}
+    for option in options:
+        try:
+            values = []
+            for opt in iter(option):
+                if case_sensitive:
+                    values.append(opt)
+                else:
+                    values.append(opt.lower()) 
+            key = option[0] if case_sensitive else option[0].lower()
+        except TypeError:
+            key = option if case_sensitive else option.lower()
+            values = [option,]  if case_sensitive else [option.lower(),]
+        options_dict[key] = values
+
+    return options_dict
+
+
+def user_choice(options = [("y", "yes"), ("n", "no")], prompt = "", case_sensitive = False):
+    """Gets an user choice from options. More different forms of any option
+    might be declared. 
+
+    Parameters
+    ----------
+    options : `list`, optional
+        List of options. If any option iterable it acceptes all forms but return first of them.
+        Default `[("y", "yes"), ("n", "no")]` -- accepts y[es] or n[o] answer.
+    prompt : `str`, optional
+        Message to be shown to user. 
+    case_sensitive : `bool`
+        If `True` then uppercase and lowercase letters are treated as distinct.
+        Default `False`
+
+    Returns
+    -------
+    user choice
+
+    Examples
+    --------
+    a = user_choice([("y", "yes"), ("n", "no")], "Yes or no? ")
+
+        If user write "y" or "yes" then fuction returns "y".
+        If user write "n" or "no" then function returns "n"
+
+    a = user_choice(prompt = "Yes or no?)
+
+        The same as previous example
+    """
+    options = _prepare_options_dictionary(options)
+    
+    while True:
+        raw_input = input(prompt) if case_sensitive else input(prompt).lower()
+        for key, values in options.items():
+            if raw_input in values:
+                return key
+        print("Incorrect value. Try it again.")
+
+
 def label_print(message, decoration = "-", extra_line = True):
     '''Prints a message in an ascii frame.
 
@@ -69,5 +155,8 @@ def label_print(message, decoration = "-", extra_line = True):
         print()
 
 if __name__ == "__main__":
-    a = user_input(prompt="Tell me something: ", pattern="^a.*$", expected_type=float)
-    label_print("You said {} and it is {}".format(a, type(a))) 
+    import doctest
+    doctest.testmod()
+
+    a = user_choice(prompt="Yes or no? ", case_sensitive=False)
+    print("Your choice: {}".format(a))
