@@ -47,7 +47,9 @@ def user_input(prompt = "", pattern = None, expected_type = str):
             if pattern.match(raw_input):
                 return raw_input
         print("Invalid input. Please answer in correct format.")
-
+    else:
+        raw_input = input(prompt)
+        return raw_input
 
 def _prepare_options_dictionary(options, case_sensitive = False):
     """Prepares dictionary from list of options. If option is iterable than first value

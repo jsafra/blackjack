@@ -2,7 +2,7 @@
 '''blackJack.py let's user play a game of Black Jack against a dealer'''
 
 import random, logging
-from blackjack_cli import user_input, label_print
+from blackjack_cli import user_input, user_choice, label_print
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logging.disable(level=logging.CRITICAL)
@@ -51,6 +51,7 @@ def generate_cards():
 			all_cards.append(new_card)
 	return all_cards
 
+
 def prepare_deck(all_cards):
 	'''Prepare a new deck for a game and shuffle cards. Repeating generation of cards doesn't occur anymore.
 	Input: list cards for playing
@@ -61,6 +62,7 @@ def prepare_deck(all_cards):
 	random.shuffle(deck)
 
 	return deck
+
 
 def draw_card(deck):
 	'''
@@ -77,6 +79,7 @@ def draw_card(deck):
 	drawn_card = deck.pop() # get and remove last card of a list (this has been already shuffled)
 	logging.debug("'{}' have been drawn and scratched from the deck".format(drawn_card['abbr']))
 	return drawn_card
+
 
 def hand_value(hand):
 	'''Counts total value of all cards in hand. 
@@ -110,6 +113,7 @@ def hand_value(hand):
 
 	return sum
 
+
 def hand_status(player = {"name": "Player", "role": "player", "hand": []}):
 	'''Returns a text message with cards and total points.
 	
@@ -142,13 +146,13 @@ def show_results(players):
 
 	label_print("** GAME RESULTS **", decoration="*")
 
-	print(hand_status(players[-1]))
-	print()
-
 	for player in players[:-1]:
+		print(hand_status(players[-1]))
 		print(hand_status(player))
 		result = resolve_game(players[0], players[1])
 		print(result[1])
+	
+	print()
 
 
 def resolve_game(player, dealer):
@@ -204,6 +208,7 @@ def resolve_game(player, dealer):
 	else:
 		raise NotImplementedError("Something's wrong. Developer didn't think about some specific situation :-)")
 
+
 def player_turn(player, deck):
 	'''Encapsulates a player actions
 
@@ -224,10 +229,10 @@ def player_turn(player, deck):
 	print(hand_status(player))
 	player_answer = ''
 
-	while hand_value(player['hand']) < 21 and player_answer != 'no': # keep playing until player says yes or has 21 or more points
-		player_answer = user_input(prompt="Would you like to draw a card? Please answer yes/no: ", accept_values = ['yes', 'no'])
+	while hand_value(player['hand']) < 21 and player_answer != "n": # keep playing until player says yes or has 21 or more points
+		player_answer = user_choice(prompt="Would you like to draw a card? Please answer yes/no: ")
 					
-		if player_answer == 'yes': # draws a card if player says yes
+		if player_answer == "y": # draws a card if player says yes
 			player['hand'].append(draw_card(deck))
 			print(hand_status(player))
 
@@ -300,11 +305,14 @@ if __name__ == "__main__":
 	doctest.testmod()
 
 	# let's go play
-	one_more_game = user_input(prompt="Hi, are you up for a game of blackjack? If so just say 'yes': ")
+	all_cards = generate_cards()
 
-	while one_more_game == 'yes':
-		label_print("This is a new game - enjoy it.")
-		play_game(generate_cards())
-		one_more_game = user_input(prompt = "Are you up for one more game? If so just say 'yes': ")
+	while True:
+		one_more_game = user_choice(prompt="Hi, are you up for a game of blackjack? If so just say 'yes' otherwise say 'no': ")
+		if one_more_game == "y":
+			label_print("This is a new game - enjoy it.")
+			play_game(all_cards)
+		else:
+			break
 
 	print('Thanks for the game(s), see you soon.')
