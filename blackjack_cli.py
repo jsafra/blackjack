@@ -218,7 +218,7 @@ def rule_sum(*refs):
     return is_sum
 
 
-# TODO: Add support for validation messages
+# IDEA: Add support for validation messages
 def user_input(prompt="", expected_type=str, *rulesets):
     '''Calls for user input from CLI with defined prompt.
 
@@ -309,7 +309,7 @@ def _prepare_options_dictionary(options, case_sensitive=False):
     return options_dict
 
 
-# TODO: Add support for validation messages
+# IDEA: Add support for validation messages
 def user_choice(options=[("y", "yes"), ("n", "no")], prompt="",
                 case_sensitive=False):
     """Gets an user choice from options. More different forms of any option
