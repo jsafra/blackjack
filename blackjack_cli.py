@@ -2,6 +2,200 @@
 
 import re
 
+
+def validate(value, default_ruleset=[], *additional_rulesets):
+    """Validate `value` against given rulesets. Each rulesets consist of
+    several single rules
+
+    `Value` is considered to be valid if it's valid against **any** ruleset.
+    To be valid against a ruleset the value has to be valid against **all**
+    rules of that ruleset.
+
+    Any function with one parameter returning a boolean might be used as a
+    rule. It includes standard library functions (e.g. `bool(x)` function)
+    as well as user defined function. There exists some pre-defined function
+    factories in module `blackjack_cli` (e.g. `rule_greater(x)`). Last but not
+    least lambda functions works too.
+
+    Parameters
+    ----------
+    value
+        Value for validation
+
+    default_ruleset
+        List of rules. Single rule is a `function` with one parameter returning
+        `True` if `value` satisfies the rule condition. Otherwise rule returns
+        `False`.
+
+    additional_rulesets
+        Another lists of rules. If `default_ruleset` is not satisfied then
+        validation against additional_rulesets happens.
+
+    Returns
+    -------
+    bool
+        `True` if any ruleset is satisfied -> value is considered to be valid.
+
+    Examples
+    --------
+    Without rulesets any value is considered to be valid.
+
+    >>> validate("anything")
+    True
+
+    Ruleset consist of several rules. All of them has to be satisfied.
+
+    >>> validate(1, [rule_greater(10), rule_odd()])
+    False
+
+    There could be more than one ruleset. It's sufficient if one of them is
+    satisfied.
+
+    >>> validate(1, [rule_greater(10), rule_odd()], [rule_lower_equal(1)])
+    True
+
+    If there were no suitable pre-defined function then lambda would save our
+    live.
+
+    >>> validate(300, [lambda x: x % 100 == 0])
+    True
+
+    Standard library function works as well.
+
+    >>> validate(10, [bool])
+    True
+    """
+    all_rulesets = [default_ruleset]
+    all_rulesets.extend(list(additional_rulesets))
+
+    val_status = True   # Validation status (result of validation)
+
+    for rules in all_rulesets:
+        val_status = True
+        for rule in rules:
+            if not rule(value):
+                val_status = False
+                break
+        if val_status:   # Current ruleset satisfied -> no need to continue
+            break
+
+    return val_status
+
+
+def rule_odd():
+    """Factory for function checking value to be odd.
+
+    Returns
+    -------
+    `function`
+        is_odd(value) -> bool
+    """
+    def is_odd(value):
+        """Returns `True` if value is odd."""
+        return value % 2 == 1
+    return is_odd
+
+
+def rule_greater(ref_value):
+    """Factory for function checking value to be greater than a reference
+    value.
+
+    Parameters
+    ----------
+    `ref_value`
+        Reference value
+
+    Returns
+    -------
+    `function`
+        is_greater(value) -> bool
+    """
+    def is_greater(value):
+        """Returns `True` if value is greater than ref_value."""
+        return value > ref_value
+    return is_greater
+
+
+def rule_greater_equal(ref_value):
+    """Factory for function checking value to be greater or equal than 
+    a reference value.
+
+    Parameters
+    ----------
+    `ref_value`
+        Reference value
+
+    Returns
+    -------
+    `function`
+        is_greater_equal(value) -> bool
+    """
+    def is_greater_equal(value):
+        """Returns `True` if value is greater or equal than ref_value."""
+        return value >= ref_value
+    return is_greater_equal
+
+
+def rule_lower(ref_value):
+    """Factory for function checking value to be lower than a reference value.
+
+    Parameters
+    ----------
+    `ref_value`
+        Reference value
+
+    Returns
+    -------
+    `function`
+        is_lower(value) -> bool
+    """
+    def is_lower(value):
+        """Returns `True` if value is lower than ref_value."""
+        return value < ref_value
+    return is_lower
+
+
+def rule_lower_equal(ref_value):
+    """Factory for function checking value to be lower or equal than
+    a reference value.
+
+    Parameters
+    ----------
+    `ref_value`
+        Reference value
+
+    Returns
+    -------
+    `function`
+        is_lower_equal(value) -> bool
+    """
+    def is_lower_equal(value):
+        """Returns `True` if value is greater or equal than ref_value."""
+        return value <= ref_value
+    return is_lower_equal
+
+
+def rule_sum(*refs):
+    """Factory for function checking value to be equal to sum of reference
+    values.
+
+    Parameters
+    ----------
+    `*refs`
+        Reference values
+
+    Returns
+    -------
+    `function`
+        is_sum(value) -> bool
+    """
+    def is_sum(value):
+        """Return `True` if values is sum of *refs (reference values)"""
+        ref_sum = sum(refs)
+        return value == ref_sum
+    return is_sum
+
+
 # TODO: Add support for validation functions
 # TODO: Add support for validation messages
 def user_input(prompt = "", expected_type = str, pattern = None, min_in = None, min_ex = None, max_in = None, max_ex = None):
@@ -183,24 +377,8 @@ def label_print(message, decoration = "-", extra_line = True):
     if extra_line:
         print()
 
+
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
 
-    # a = user_choice(prompt="Yes or no? ", case_sensitive=False)
-    # print("Your choice: {}".format(a))
-
-
-    
-    old_input = input
-
-    v = [10, 11, 12]
-
-    def new_input(*args, **kwargs):
-        return v.pop()
-
-    input = new_input
-
-    a = user_input(prompt="Some number: ", expected_type=int,max_in=10)
-
-    print(a)
