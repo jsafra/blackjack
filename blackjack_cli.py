@@ -117,7 +117,7 @@ def rule_greater(ref_value):
 
 
 def rule_greater_equal(ref_value):
-    """Factory for function checking value to be greater or equal than 
+    """Factory for function checking value to be greater or equal than
     a reference value.
 
     Parameters
@@ -175,6 +175,28 @@ def rule_lower_equal(ref_value):
     return is_lower_equal
 
 
+def rule_pattern_match(pattern):
+    """Factory for function checking value to match given regex.
+
+    Parameters
+    ----------
+    `pattern` : `str` or `re.Pattern`, optional
+        Regex pattern used for user input validation.
+
+    Returns
+    -------
+    `function`
+        is_pattern_match(value) -> bool
+    """
+    if type(pattern) == str:
+        pattern = re.compile(pattern)
+
+    def is_pattern_match(value):
+        return bool(pattern.match(value))
+
+    return is_pattern_match
+
+
 def rule_sum(*refs):
     """Factory for function checking value to be equal to sum of reference
     values.
@@ -196,9 +218,8 @@ def rule_sum(*refs):
     return is_sum
 
 
-# TODO: Add support for validation functions
 # TODO: Add support for validation messages
-def user_input(prompt = "", expected_type = str, pattern = None, min_in = None, min_ex = None, max_in = None, max_ex = None):
+def user_input(prompt="", expected_type=str, *rulesets):
     '''Calls for user input from CLI with defined prompt.
 
     Parameters
@@ -206,23 +227,11 @@ def user_input(prompt = "", expected_type = str, pattern = None, min_in = None, 
     prompt : `str`, optional
         Message to be shown to user.
     expected_type : `class`, optional
-        Expected type of return value. User input is accepted only if it is possible to cast it to expected type.
+        Expected type of return value. User input is accepted only if it is
+        possible to cast it to expected type.
         Default `str`.
-    pattern : `str` or `re.Pattern`, optional
-        Regex pattern used for user input validation.
-        Works only if expected_type param is not set or if `str` is its value.
-    min_in : `int` or `float`, optional
-        Minimal acceptable value (inclusive) where expected_type is numerical type.
-        Works only if expected_type param is `int` or `float`.
-    min_ex : `int` or `float`, optional
-        Minimal acceptable value (exclusive) where expected_type is numerical type.
-        Works only if expected_type param is `int` or `float`.
-    max_in : `int` or `float`, optional
-        Maximal acceptable value (inclusive) where expected_type is numerical type.
-        Works only if expected_type param is `int` or `float`.
-    max_ex : `int` or `float`, optional
-        Maximal acceptable value (exclusive) where expected_type is numerical type.
-        Works only if expected_type param is `int` or `float`.
+    rulesets : `list` of rules
+        Rulesets to be applied for input value validation.
 
     Returns
     -------
@@ -231,55 +240,38 @@ def user_input(prompt = "", expected_type = str, pattern = None, min_in = None, 
 
     Examples
     --------
-    x1 = user_input(prompt="Tell me something: ")
+    x1 = user_input("Tell me anything: ")
 
-    x2 = user_input(prompt="Tell me something: ", pattern="^a.*$")
+    x2 = user_input("Give me some integer: ", int)
 
-    x3 = user_input(prompt="Tell me something: ", expected_type=int)  
+    x3 = user_input("Tell me something starting with 'a': ", str,
+                    [is_pattern_match("^a.*$")])
+
+    See also
+    --------
+    Docstring of `validate` method for more details about validation rulesets.
     '''
-    regex_validation = True if expected_type == str and pattern else False
-    type_validation = expected_type != str
-
-    if regex_validation and type(pattern) == str:
-        pattern = re.compile(pattern)
-
-    validated = False if (regex_validation or type_validation) else True 
-    
-    while not validated:
+    while True:
         raw_input = input(prompt)
 
-        if type_validation:
-            try:
-                raw_input = expected_type(raw_input)
-                validated = True
+        try:
+            raw_input = expected_type(raw_input)
+            if validate(raw_input, *rulesets):
+                break
+        except Exception:
+            pass
 
-                if (min_in is not None and min_in > raw_input):
-                    validated = False
-                if min_ex is not None and min_ex >= raw_input:
-                    validated = False
-                if max_in is not None and max_in < raw_input:
-                    validated = False
-                if max_ex is not None and max_ex <= raw_input:
-                    validated = False
-            except Exception:
-                pass
-        elif regex_validation:
-            if pattern.match(raw_input):
-                validated = True
+        print("Invalid input. Please answer in correct format.")
 
-        if not validated:
-            print("Invalid input. Please answer in correct format.")
-    
     return raw_input
 
-def _prepare_options_dictionary(options, case_sensitive = False):
-    """Prepares dictionary from list of options. If option is iterable than first value
-    if a key and all values (including the first one) are values. 
-    
+
+def _prepare_options_dictionary(options, case_sensitive=False):
+    """Prepares dictionary from list of options. If option is iterable than
+    first value if a key and all values (including the first one) are values.
+
     Remember: `str` is  iterable too :-)
 
-    
-    
     For internal use in `user_choice` function.
 
     Parameters
@@ -295,7 +287,7 @@ def _prepare_options_dictionary(options, case_sensitive = False):
 
     Examples
     --------
-    >>> _prepare_options_dictionary(["blah"]) 
+    >>> _prepare_options_dictionary(["blah"])
     {'b': ['b', 'l', 'a', 'h']}
     """
 
@@ -307,27 +299,30 @@ def _prepare_options_dictionary(options, case_sensitive = False):
                 if case_sensitive:
                     values.append(opt)
                 else:
-                    values.append(opt.lower()) 
+                    values.append(opt.lower())
             key = option[0] if case_sensitive else option[0].lower()
         except TypeError:
             key = option if case_sensitive else option.lower()
-            values = [option,]  if case_sensitive else [option.lower(),]
+            values = [option, ] if case_sensitive else [option.lower(), ]
         options_dict[key] = values
 
     return options_dict
 
+
 # TODO: Add support for validation messages
-def user_choice(options = [("y", "yes"), ("n", "no")], prompt = "", case_sensitive = False):
+def user_choice(options=[("y", "yes"), ("n", "no")], prompt="",
+                case_sensitive=False):
     """Gets an user choice from options. More different forms of any option
-    might be declared. 
+    might be declared.
 
     Parameters
     ----------
     options : `list`, optional
-        List of options. If any option iterable it acceptes all forms but return first of them.
+        List of options. If any option iterable it acceptes all forms but
+        return first of them.
         Default `[("y", "yes"), ("n", "no")]` -- accepts y[es] or n[o] answer.
     prompt : `str`, optional
-        Message to be shown to user. 
+        Message to be shown to user.
     case_sensitive : `bool`
         If `True` then uppercase and lowercase letters are treated as distinct.
         Default `False`
@@ -348,7 +343,7 @@ def user_choice(options = [("y", "yes"), ("n", "no")], prompt = "", case_sensiti
         The same as previous example
     """
     options = _prepare_options_dictionary(options)
-    
+
     while True:
         raw_input = input(prompt) if case_sensitive else input(prompt).lower()
         for key, values in options.items():
@@ -357,7 +352,7 @@ def user_choice(options = [("y", "yes"), ("n", "no")], prompt = "", case_sensiti
         print("Incorrect value. Try it again.")
 
 
-def label_print(message, decoration = "-", extra_line = True):
+def label_print(message, decoration="-", extra_line=True):
     '''Prints a message in an ascii frame.
 
     Parameters
@@ -367,7 +362,8 @@ def label_print(message, decoration = "-", extra_line = True):
     decoration: `char`
         Character to be used for frame building. Default '-'.
     extra_line: `bool`
-        If `True` then an additional empty lines is added before and after message. Default `True`
+        If `True` then an additional empty lines is added before and after
+        message. Default `True`
     '''
     if extra_line:
         print()
@@ -382,3 +378,8 @@ if __name__ == "__main__":
     import doctest
     doctest.testmod()
 
+    x = user_input("Say 'hi': ", str, [rule_pattern_match("^[hH]i .*")])
+
+    x = user_input("Give me some money: ", int,
+                   [rule_greater(0), lambda x: x % 100 == 0],
+                   [lambda x: x == -1])

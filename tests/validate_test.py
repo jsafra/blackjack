@@ -1,5 +1,5 @@
 import unittest
-from blackjack_cli import validate, rule_odd, rule_greater_equal
+from blackjack_cli import validate, rule_odd, rule_greater_equal, rule_pattern_match
 
 
 class ValidateTest(unittest.TestCase):
@@ -65,6 +65,12 @@ class ValidateTest(unittest.TestCase):
         self.assertEqual(False, is_greater_equal(4))
         self.assertEqual(True, is_greater_equal(5))
         self.assertEqual(True, is_greater_equal(6))
+
+    def test_rule_pattern_match(self):
+        """Test factored function for validation pattern match"""
+        is_pattern_match = rule_pattern_match("^a.*$")
+        self.assertEqual(True, is_pattern_match("ahoj"))
+        self.assertEqual(False, is_pattern_match("nazdar"))
 
 
 if __name__ == "__main__":
