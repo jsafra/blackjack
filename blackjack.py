@@ -32,7 +32,7 @@ def generate_cards():
     '''
 
     all_cards = []
-    colors = [('hearts', '♥'), ('diamonds', '♦'), ('spades', '♣'), 
+    colors = [('hearts', '♥'), ('diamonds', '♦'), ('spades', '♣'),
               ('clubs', '♠')]
     cards = [2, 3, 4, 5, 6, 7, 8, 9, 10, 'Jack', 'Queen', 'King', 'Ace']
 
@@ -240,8 +240,9 @@ def player_turn(player, deck):
 
     # keep playing until player says yes or has 21 or more points
     while hand_value(player['hand']) < 21 and player_answer != "n":
-        player_answer = user_choice(prompt="Would you like to draw a card?",
-                                    "Please answer yes/no: ")
+        player_answer = user_choice(
+            prompt="Would you like to draw a card? Please answer yes/no: "
+        )
 
         if player_answer == "y":  # draws a card if player says yes
             player['hand'].append(draw_card(deck))
@@ -303,7 +304,7 @@ def play_game(all_cards):
          "turn": dealer_turn}
     ]
 
-    for i in range(0, 2): 
+    for i in range(0, 2):
         for player in players:
             # NOTE: In some variations of blackjack dealer gets only first card
             # at the start of a game or distinguish 'up card' and 'hole card'
@@ -325,7 +326,10 @@ if __name__ == "__main__":
     all_cards = generate_cards()
 
     while True:
-        one_more_game = user_choice(prompt="Hi, are you up for a game of blackjack? If so just say 'yes' otherwise say 'no': ")
+        one_more_game = user_choice(
+            prompt="Hi, are you up for a game of blackjack? If so just say" +
+                   "yes' otherwise say 'no': "
+        )
         if one_more_game == "y":
             label_print("This is a new game - enjoy it.")
             play_game(all_cards)
