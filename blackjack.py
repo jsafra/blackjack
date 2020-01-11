@@ -283,28 +283,20 @@ def dealer_turn(dealer, deck, soft17_draw=False):
     logging.debug("Dealer has 17 points or more - he must stand up")
 
 
-def play_game(all_cards):
+def play_game(players, all_cards):
     '''Plays a single round of blackjack. Uses all the functions above.
     Input: User input according to the instructions printed out
     Output: Let's user play a single round of blackjack
     '''
 
-    # NOTE: Blackjack is player with 1-8 decks of card. It should be easy to
+    # NOTE: Blackjack is played with 1-8 decks of card. It should be easy to
     # implement this now.
     deck = prepare_deck(all_cards)
 
-    # Represent players as a dictionary. May be the hand shouldn't be part of
-    # this dictionary?
-    # TODO: dynamic number of players with various names. But ensure that
-    # dealer is the last one and only one !!
-    players = [
-        {"name": "John Doe", "role": "player", "hand": [],
-         "turn": player_turn},
-        {"name": "Anonymous Dealer", "role": "dealer", "hand": [],
-         "turn": dealer_turn}
-    ]
+    for player in players:
+        player['hand'] = []
 
-    for i in range(0, 2):
+    for _ in range(0, 2):
         for player in players:
             # NOTE: In some variations of blackjack dealer gets only first card
             # at the start of a game or distinguish 'up card' and 'hole card'
@@ -325,14 +317,25 @@ if __name__ == "__main__":
     # let's go play
     all_cards = generate_cards()
 
+    # Represent players as a dictionary. May be the hand shouldn't be part of
+    # this dictionary?
+    # TODO: dynamic number of players with various names. But ensure that
+    # dealer is the last one and only one !!
+    players = [
+        {"name": "John Doe", "role": "player", "hand": [],
+         "turn": player_turn},
+        {"name": "Anonymous Dealer", "role": "dealer", "hand": [],
+         "turn": dealer_turn}
+    ]
+
     while True:
         one_more_game = user_choice(
             prompt="Hi, are you up for a game of blackjack? If so just say" +
-                   "yes' otherwise say 'no': "
+                   "'yes' otherwise say 'no': "
         )
         if one_more_game == "y":
             label_print("This is a new game - enjoy it.")
-            play_game(all_cards)
+            play_game(players, all_cards)
         else:
             break
 
