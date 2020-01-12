@@ -124,15 +124,12 @@ def hand_value(hand):
     return sum
 
 
-def hand_status(player={"name": "Player", "role": "player", "hand": []}):
+def hand_status(player):
     '''Returns a text message with cards and total points.
 
     Parameters
     ----------
-    hand : list
-        hand is a list of cards. Every card is represented as a dictionary,
-        this function expect presence of 'abbr' key and 'value' consequently.
-    player: dictionary
+    player : dictionary
 
     Returns
     -------
@@ -143,8 +140,8 @@ def hand_status(player={"name": "Player", "role": "player", "hand": []}):
         status = "You have {} in your hand which makes a {}-point hand."
     else:
         status = "The dealer has {} in his hand which makes a {}-point hand."
-    status = status.format([h['abbr'] for h in player['hand']],
-                           hand_value(player['hand']))
+    status = status.format([c["abbr"] for c in player["game"]["hand"]],
+                           hand_value(player["game"]["hand"]))
     return status
 
 
@@ -170,6 +167,8 @@ def show_results(players):
 def resolve_game(player, dealer):
     '''Decides the result of a single game.
 
+    Works upon result of player and dealer.
+
     Parameters
     ----------
     player : dict
@@ -185,37 +184,65 @@ def resolve_game(player, dealer):
     resultText
         Text message with a game result.
     '''
-    player_score = hand_value(player['hand'])
-    player_blackjack = player_score == 21 and len(player['hand']) == 2
+    player_result = player["game"]["result"]
+    dealer_result = dealer["game"]["result"]
 
-    dealer_score = hand_value(dealer['hand'])
-    dealer_blackjack = dealer_score == 21 and len(dealer['hand']) == 2
-
-    if player_score > 21:
+    if player_result == "BS":
         return ("DW", "Sorry, you are busted.")
 
-    elif dealer_score > 21:
+    if player_result == "SR":
+        return ("DW", "Sorry, you surrended.")
+
+    elif dealer_result == "BS":
         return ("PW", "You win - dealer is busted.")
 
     # checks for straight blackjack and if so ends the game
-    elif player_blackjack and not dealer_blackjack:
+    elif player_result == "BJ" != dealer_result:
         return ("PW", "Blackjack, you win!")
 
-    elif dealer_blackjack and not player_blackjack:
+    elif player_result != "BJ" == dealer_result:
         return ("DW", "Dealer has got a blackjack, you lose this game!")
 
-    elif player_score > dealer_score:
+    elif player_result > dealer_result:
         return ("PW", "Congratulations, you win.")
 
-    elif dealer_score > player_score:
+    elif dealer_result > player_result:
         return ("DW", "Bad luck, you lose this time.")
 
-    elif player_score == dealer_score:
+    elif player_result == dealer_result:
         return ("SO", "Stand off - neither dealer nor player win.")
 
     else:
         raise NotImplementedError("Something's wrong. Developer didn't think",
                                   "about some specific situation :-)")
+
+
+def resolve_player(player):
+    """Set a status of player game according his cards.
+
+    Parameters
+    ----------
+    player : dictionary
+        Dictionary representing player entity.
+
+    Returns
+    -------
+    None
+
+    See also
+    --------
+    See doc/objects.md for more details about player representation.
+    """
+    if player["game"]["result"] is None:
+        player_score = hand_value(player["game"]["hand"])
+        player_blackjack = player_score == 21 and \
+            len(player["game"]["hand"]) == 2
+
+        if player_blackjack:
+            player["game"]["result"] = "BJ"
+        else:
+            player["game"]["result"] = player_score if player_score <= 21 \
+                else "BS"
 
 
 def player_turn(player, deck):
@@ -238,15 +265,25 @@ def player_turn(player, deck):
     print(hand_status(player))
     player_answer = ''
 
-    # keep playing until player says yes or has 21 or more points
-    while hand_value(player['hand']) < 21 and player_answer != "n":
+    # keep playing until player doesn't stay or has 21 or more points
+    while hand_value(player["game"]["hand"]) < 21 \
+            and player_answer not in ("s", "d", "r"):
         player_answer = user_choice(
-            prompt="Would you like to draw a card? Please answer yes/no: "
+            options=[
+                ("h", "hit"), ("s", "stay"), ("d", "double"), ("r", "surrend")
+            ],
+            prompt="What would you like to do? (hit, stay, double, surrend): "
         )
 
-        if player_answer == "y":  # draws a card if player says yes
-            player['hand'].append(draw_card(deck))
+        if player_answer == "h":  # hit -> draw a card
+            player["game"]["hand"].append(draw_card(deck))
             print(hand_status(player))
+        elif player_answer == "d":  # double
+            # TODO: increase the bet here
+            player["game"]["hand"].append(draw_card(deck))
+        elif player_answer == "r":  # surrender
+            # TODO: give one half of bet to dealer and return second half
+            player["game"]["result"] = "SR"
 
 
 def dealer_turn(dealer, deck, soft17_draw=False):
@@ -274,10 +311,10 @@ def dealer_turn(dealer, deck, soft17_draw=False):
     logging.debug("This is as dealer turn")
 
     # TODO: Implement soft17_draw logic
-    while hand_value(dealer['hand']) < 17:
+    while hand_value(dealer["game"]["hand"]) < 17:
         logging.debug(hand_status(dealer))
         logging.debug("Dealer has less than 17 points - he must draw a card")
-        dealer['hand'].append(draw_card(deck))
+        dealer["game"]["hand"].append(draw_card(deck))
 
     logging.debug(hand_status(dealer))
     logging.debug("Dealer has 17 points or more - he must stand up")
@@ -294,17 +331,18 @@ def play_game(players, all_cards):
     deck = prepare_deck(all_cards)
 
     for player in players:
-        player['hand'] = []
+        player["game"] = {"hand": [], "result": None, "bet": 0}
 
     for _ in range(0, 2):
         for player in players:
             # NOTE: In some variations of blackjack dealer gets only first card
             # at the start of a game or distinguish 'up card' and 'hole card'
             # and so on
-            player['hand'].append(draw_card(deck))
+            player["game"]["hand"].append(draw_card(deck))
 
     for player in players:
         player['turn'](player, deck)
+        resolve_player(player)
 
     show_results(players)
 
@@ -322,10 +360,20 @@ if __name__ == "__main__":
     # TODO: dynamic number of players with various names. But ensure that
     # dealer is the last one and only one !!
     players = [
-        {"name": "John Doe", "role": "player", "hand": [],
-         "turn": player_turn},
-        {"name": "Anonymous Dealer", "role": "dealer", "hand": [],
-         "turn": dealer_turn}
+        {
+            "name": "John Doe",
+            "role": "player",
+            "turn": player_turn,
+            "cash": 1000,
+            "game": {"hand": [], "result": None, "bet": 0}
+        },
+        {
+            "name": "Anonymous Dealer",
+            "role": "dealer",
+            "turn": dealer_turn,
+            "cash": 1000,
+            "game": {"hand": [], "result": None}
+        }
     ]
 
     while True:
