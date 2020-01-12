@@ -327,8 +327,8 @@ if __name__ == "__main__":
 
     while True:
         one_more_game = user_choice(
-            prompt="Hi, are you up for a game of blackjack? If so just say" +
-                   "yes' otherwise say 'no': "
+            prompt="Hi, are you up for a game of blackjack? If so just say " +
+                   "'yes' otherwise say 'no': "
         )
         if one_more_game == "y":
             label_print("This is a new game - enjoy it.")
