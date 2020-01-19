@@ -3,7 +3,8 @@
 
 import random
 import logging
-from blackjack_cli import user_input, user_choice, label_print
+from blackjack_cli import user_input, user_choice, label_print, \
+    rule_greater, rule_greater_equal, rule_lower_equal, rule_even
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s - %(levelname)s - %(message)s')
@@ -165,7 +166,7 @@ def show_results(players):
 
 
 def resolve_game(player, dealer):
-    '''Decides the result of a single game.
+    '''Decides the result of a single game and handle the bets and rewards.
 
     Works upon result of player and dealer.
 
@@ -188,28 +189,53 @@ def resolve_game(player, dealer):
     dealer_result = dealer["game"]["result"]
 
     if player_result == "BS":
+        dealer["cash"] += player["game"]["bet"]
         return ("DW", "Sorry, you are busted.")
 
     if player_result == "SR":
+        half_bet = player["game"]["bet"] // 2
+        player["cash"] += half_bet
+        dealer["cash"] += half_bet
         return ("DW", "Sorry, you surrended.")
-
-    elif dealer_result == "BS":
-        return ("PW", "You win - dealer is busted.")
 
     # checks for straight blackjack and if so ends the game
     elif player_result == "BJ" != dealer_result:
+        reward = player["game"]["bet"] * 3 // 2
+        player["cash"] += player["game"]["bet"]
+        player["cash"] += reward
+        dealer["cash"] -= reward
+
         return ("PW", "Blackjack, you win!")
 
+    elif dealer_result == "BS":
+        reward = player["game"]["bet"]
+        player["cash"] += player["game"]["bet"]
+        player["cash"] += reward
+        dealer["cash"] -= reward
+
+        return ("PW", "You win - dealer is busted.")
+
     elif player_result != "BJ" == dealer_result:
+        dealer["cash"] += player["game"]["bet"]
+
         return ("DW", "Dealer has got a blackjack, you lose this game!")
 
     elif player_result > dealer_result:
+        reward = player["game"]["bet"]
+        player["cash"] += player["game"]["bet"]
+        player["cash"] += reward
+        dealer["cash"] -= player["game"]["bet"]
+
         return ("PW", "Congratulations, you win.")
 
     elif dealer_result > player_result:
+        dealer["cash"] += player["game"]["bet"]
+
         return ("DW", "Bad luck, you lose this time.")
 
     elif player_result == dealer_result:
+        player["cash"] += player["game"]["bet"]
+
         return ("SO", "Stand off - neither dealer nor player win.")
 
     else:
@@ -279,10 +305,22 @@ def player_turn(player, deck):
             player["game"]["hand"].append(draw_card(deck))
             print(hand_status(player))
         elif player_answer == "d":  # double
-            # TODO: increase the bet here
+            bet = user_input(
+                "How much do you wish to increase your bet?",
+                int,
+                [
+                    rule_greater(0),
+                    rule_even(),
+                    rule_lower_equal(
+                        min(player["cash"], player["game"]["bet"])
+                    )
+                ]
+            )
+            player["game"]["bet"] += bet
+            player["cash"] -= bet
+
             player["game"]["hand"].append(draw_card(deck))
         elif player_answer == "r":  # surrender
-            # TODO: give one half of bet to dealer and return second half
             player["game"]["result"] = "SR"
 
 
@@ -310,7 +348,6 @@ def dealer_turn(dealer, deck, soft17_draw=False):
     '''
     logging.debug("This is as dealer turn")
 
-    # TODO: Implement soft17_draw logic
     while hand_value(dealer["game"]["hand"]) < 17:
         logging.debug(hand_status(dealer))
         logging.debug("Dealer has less than 17 points - he must draw a card")
@@ -326,18 +363,26 @@ def play_game(players, all_cards):
     Output: Let's user play a single round of blackjack
     '''
 
-    # NOTE: Blackjack is played with 1-8 decks of card. It should be easy to
-    # implement this now.
     deck = prepare_deck(all_cards)
 
     for player in players:
         player["game"] = {"hand": [], "result": None, "bet": 0}
 
+        if not player["role"] == "dealer":
+            bet = user_input(
+                "How much do you wish to bet?",
+                int,
+                [
+                    rule_greater_equal(100),
+                    rule_lower_equal(player["cash"]),
+                    rule_even()
+                ]
+            )
+            player["game"]["bet"] = bet
+            player["cash"] -= bet
+
     for _ in range(0, 2):
         for player in players:
-            # NOTE: In some variations of blackjack dealer gets only first card
-            # at the start of a game or distinguish 'up card' and 'hole card'
-            # and so on
             player["game"]["hand"].append(draw_card(deck))
 
     for player in players:
@@ -355,8 +400,6 @@ if __name__ == "__main__":
     # let's go play
     all_cards = generate_cards()
 
-    # Represent players as a dictionary. May be the hand shouldn't be part of
-    # this dictionary?
     # TODO: dynamic number of players with various names. But ensure that
     # dealer is the last one and only one !!
     players = [

@@ -96,6 +96,20 @@ def rule_odd():
     return is_odd
 
 
+def rule_even():
+    """Factory for function checking value to be even.
+
+    Returns
+    -------
+    `function`
+        is_even(value) -> bool
+    """
+    def is_even(value):
+        """Returns `True` if value is even."""
+        return value % 2 == 0
+    return is_even
+
+
 def rule_greater(ref_value):
     """Factory for function checking value to be greater than a reference
     value.
